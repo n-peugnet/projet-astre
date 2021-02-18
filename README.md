@@ -1,8 +1,8 @@
-# ASTRE - Architecture multiprocesseur à mémoire partagée
+# ASTRE -- Shared-memory multiprocessors architecture
 
 This project uses `make` for every possible tasks.
 The root Makefile loads variables from the `.env` file.
-This is an easy way to override every varibles defined with `?=`.
+This is an easy way to override every variable defined with `?=`.
 
 ## PDF
 

@@ -1,7 +1,13 @@
 FILES = rapport
 TEX = $(FILES:%=%.tex)
 PDF = $(FILES:%=%.pdf)
-LATEXMK_FLAGS ?= -quiet
+
+# Debug flags
+ifdef DEBUG
+LATEXMK_FLAGS += -verbose
+else
+LATEXMK_FLAGS += -quiet
+endif
 
 pdf: $(PDF)
 

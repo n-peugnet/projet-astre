@@ -16,7 +16,9 @@ endif
 
 ############## PHONY targets ##############
 
-all: $(SRC_FILE) pdf
+all: pdf nusmv
+
+nusmv: $(SRC_FILE)
 	$(NUSMV) $(NUSMV_FLAGS) $<
 
 pdf:
@@ -25,7 +27,7 @@ pdf:
 clean:
 	$(MAKE) -C $(PDF) $@
 
-.PHONY: all pdf clean
+.PHONY: all nusmv pdf clean
 
 ############### File targets ##############
 

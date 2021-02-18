@@ -3,5 +3,6 @@
 NuSMV-*
 
 # Editor files
-.vscode
+.vscode/*
+!.vscode/extensions.json
 *~
