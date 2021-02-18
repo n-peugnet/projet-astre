@@ -1,0 +1,19 @@
+{
+	"editor.insertSpaces": false,
+	"ltex.language": "fr",
+	"ltex.enabled": [
+		"bibtex",
+		"latex"
+	],
+	"ltex.checkFrequency": "save",
+	"ltex.latex.commands": {
+		"\\lstset{}": "ignore"
+	},
+	"ltex.dictionary": {
+		"fr": [
+			"Joube",
+			"Peugnet",
+			"WTF"
+		]
+	}
+}
