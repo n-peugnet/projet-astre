@@ -1,0 +1,35 @@
+MODULE main
+VAR
+	demP  : boolean;
+	demQ  : boolean;
+	procP : process proc(demP, demQ);
+	procQ : process proc(demQ, demP);
+ASSIGN
+	init(demP) := FALSE;
+	init(demQ) := FALSE;
+SPEC AG ( !(procP.state = critical & procQ.state = critical) ); -- P1
+SPEC AG ( (procP.state = waiting & procQ.state != waiting) -> A [ !(procQ.state = waiting & AX procQ.state = critical) U procP.state = critical ] ); -- P4
+
+MODULE proc(demSelf, demOther)
+VAR
+	state : {idle, waiting, critical, exiting};
+ASSIGN
+	init(state) := idle;
+	next(state) :=
+		case
+			state = idle & !demOther    : {idle, waiting};
+			state = waiting & !demOther : critical;
+			state = critical            : exiting;
+			state = exiting             : idle;
+			TRUE                        : state;
+		esac;
+	next(demSelf) :=
+		case
+			state = waiting : TRUE;
+			state = exiting : FALSE;
+			TRUE            : demSelf;
+		esac;
+FAIRNESS
+	running;
+SPEC AG ( (state = waiting) -> AF (state = critical) ); -- P2
+SPEC AG ( (state = waiting) -> EF (state = critical) ); -- P3

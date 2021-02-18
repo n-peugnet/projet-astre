@@ -1,0 +1,7 @@
+# Project files
+.env
+NuSMV-*
+
+# Editor files
+.vscode
+*~
