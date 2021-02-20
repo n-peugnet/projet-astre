@@ -28,6 +28,11 @@ ASSIGN
       bus.valid & bus.CTRL = read: data[bus.AD];
       TRUE: DT;
     esac;
+  next(valid) :=
+    case
+      bus.arb_gnt = mem & bus.DT = DT: TRUE; -- if bus out data is mem data, then valid is TRUE
+      TRUE:                            FALSE; -- else valid is false
+    esac;
 
 ------------------------------------ Cache -----------------------------------
 MODULE Cache(bus, processor)
@@ -44,6 +49,11 @@ ASSIGN
   init(CTRL) := read;
   init(valid):= FALSE;
   init(req)  := TRUE;
+  next(req) :=
+    case
+      req = TRUE & bus.arb_gnt = mem & bus.valid = TRUE: req = FALSE;
+      TRUE:                                        TRUE; -- request infinitely often for now
+    esac;
 
 
 ---------------------------------- Processor ---------------------------------
@@ -76,9 +86,9 @@ ASSIGN
   -- bus arbitre --
   next(bus.arb_gnt) :=
     case
-      bus.arb_gnt = mem & cache.req & bus.valid = TRUE: l1_1;
-      bus.arb_gnt != mem: mem;
-      TRUE: mem;
+      bus.arb_gnt = mem & cache.req & bus.valid = TRUE: l1_1; -- if mem data is valid on the bus, then next master is l1_1
+      bus.arb_gnt != mem:                               mem; -- if bus master is not mem, then next is mem
+      TRUE:                                             mem; -- default bus master is mem
     esac;
 
   -- bus out --
@@ -105,7 +115,9 @@ ASSIGN
 
 
 --------------------------- Specifications ---------------------------
-SPEC AG AF(bus.arb_gnt = mem)
-SPEC AX (bus.AD = memory.AD)
-SPEC AX (bus.DT = memory.DT)
-SPEC AX (bus.valid = memory.valid)
+SPEC AG AF(bus.arb_gnt = mem) -- mem is always infinitely often the master
+SPEC AG AF(bus.arb_gnt = l1_1) -- l1_1 is infinitely often the master
+SPEC AX (bus.AD = memory.AD) -- not that important
+SPEC AX (bus.DT = memory.DT) -- not that important
+SPEC AX (bus.valid = memory.valid) -- not that important
+SPEC AG (bus.valid & bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL) -- if l1_1 is bus master, then bus out must be l1_in
