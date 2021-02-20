@@ -34,8 +34,16 @@ ASSIGN
   init(valid)   := FALSE;
 
   ---------- internal values ---------
-  next(data[0]) := data[0]; -- for now memory values never change
-  next(data[1]) := data[1];
+  next(data[0]) :=
+    case
+      bus.is_valid_cache & bus.CTRL = write & bus.AD = 0: bus.DT;
+      TRUE:                                               data[0];
+    esac;
+  next(data[1]) :=
+    case
+      bus.is_valid_cache & bus.CTRL = write & bus.AD = 1: bus.DT;
+      TRUE:                                               data[1];
+    esac;
   ------------ bus values ------------
   next(DT) :=
     case
@@ -155,10 +163,9 @@ SPEC AX (bus.valid = memory.valid) -- not that important
 SPEC AG (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) -- if l1_1 is bus master, then bus out must be l1_in
 SPEC AG (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) -- if mem is bus master, then bus out must be mem_in
 SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD]) -- if l1_1 reads data, then next value in bus is the requested value
+SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX (memory.data[cache.AD] = cache.DT)
 -- verify that the alternance is working (for now) --
 SPEC AG AF(cache.AD = 0 & cache.CTRL = read)
 SPEC AG AF(cache.AD = 1 & cache.CTRL = read)
 SPEC AG AF(cache.AD = 0 & cache.CTRL = write)
 SPEC AG AF(cache.AD = 1 & cache.CTRL = write)
--- verify mem values are always different (for now) --
-SPEC AG (memory.data[0] != memory.data[1])
