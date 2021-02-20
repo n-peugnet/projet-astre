@@ -16,7 +16,7 @@ endif
 
 ############## PHONY targets ##############
 
-all: pdf nusmv
+all: nusmv # pdf
 
 nusmv: $(SRC_FILE)
 	$(NUSMV) $(NUSMV_FLAGS) $<
