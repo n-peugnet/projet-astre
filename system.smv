@@ -139,8 +139,8 @@ SPEC AG AF(bus.arb_gnt = l1_1) -- l1_1 is infinitely often the master
 SPEC AX (bus.AD = memory.AD) -- not that important
 SPEC AX (bus.DT = memory.DT) -- not that important
 SPEC AX (bus.valid = memory.valid) -- not that important
-SPEC AG (bus.valid & bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) -- if l1_1 is bus master, then bus out must be l1_in
-SPEC AG (bus.valid & bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) -- if mem is bus master, then bus out must be mem_in
+SPEC AG (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) -- if l1_1 is bus master, then bus out must be l1_in
+SPEC AG (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) -- if mem is bus master, then bus out must be mem_in
 SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD]) -- if l1_1 reads data, then next value in bus is the requested value
 -- verify that the alternance is working (for now) --
 SPEC AG AF(cache.AD = 0)
