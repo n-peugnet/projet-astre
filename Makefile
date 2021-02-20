@@ -5,7 +5,7 @@ NUSMV_FLAGS ?=
 NUSMV ?= $(NUSMV_PATH)/bin/NuSMV
 
 PDF ?= pdf
-SRC ?= tp_ex2
+SRC ?= system
 
 SRC_FILE = $(addsuffix .smv,$(SRC))
 
