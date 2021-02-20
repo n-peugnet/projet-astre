@@ -2,11 +2,19 @@
 ------------------------------------- Bus ------------------------------------
 MODULE Bus
 VAR
+  ------------- Real Bus data --------------
   AD:      {0,1}; -- address
   DT:      boolean; -- data if CTRL is write
   CTRL:    {read, write};
   arb_gnt: {l1_1, mem}; -- arbitre decision
   valid:   boolean; -- data on the bus is valid
+
+  ------------- Computed state -------------
+  is_valid_mem:  boolean;
+  is_valid_cache: boolean;
+
+ASSIGN
+  is_valid_mem := arb_gnt = mem & valid;
 
 ----------------------------------- Memory -----------------------------------
 MODULE Memory(bus)
@@ -18,11 +26,15 @@ VAR
 
 ASSIGN
   init(data[0]) := FALSE;
-  init(data[1]) := FALSE;
+  init(data[1]) := TRUE;
   init(AD)      := 0;
   init(DT)      := FALSE;
   init(valid)   := FALSE;
 
+  ---------- internal values ---------
+  next(data[0]) := data[0]; -- for now memory values never change
+  next(data[1]) := data[1];
+  ------------ bus values ------------
   next(DT) :=
     case
       bus.valid & bus.CTRL = read: data[bus.AD];
@@ -51,8 +63,14 @@ ASSIGN
   init(req)  := TRUE;
   next(req) :=
     case
-      req = TRUE & bus.arb_gnt = mem & bus.valid = TRUE: req = FALSE;
-      TRUE:                                        TRUE; -- request infinitely often for now
+      req = TRUE & bus.is_valid_mem: FALSE;
+      TRUE:                          TRUE; -- request infinitely often for now
+    esac;
+  next(AD) :=
+    case
+      bus.is_valid_mem & AD = 1: 0; -- alternate between 2 addresses reads for now
+      bus.is_valid_mem & AD = 0: 1;
+      TRUE:                      AD;
     esac;
 
 
@@ -121,3 +139,9 @@ SPEC AX (bus.AD = memory.AD) -- not that important
 SPEC AX (bus.DT = memory.DT) -- not that important
 SPEC AX (bus.valid = memory.valid) -- not that important
 SPEC AG (bus.valid & bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL) -- if l1_1 is bus master, then bus out must be l1_in
+SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD])
+-- verify that the alternance is working (for now) --
+SPEC AG AF(cache.AD = 0)
+SPEC AG AF(cache.AD = 1)
+-- verify mem values are always different (for now) --
+SPEC AG (memory.data[0] != memory.data[1])
