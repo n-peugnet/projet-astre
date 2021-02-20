@@ -77,23 +77,6 @@ ASSIGN
   init(CTRL) := read;
   init(valid):= FALSE;
   init(req)  := TRUE;
-  next(req) :=
-    case
-      req = TRUE & bus.is_valid_mem & is_our_request : FALSE;
-      TRUE:                                            TRUE; -- request infinitely often for now
-    esac;
-  next(AD) :=
-    case
-      bus.is_valid_mem & AD = 1: 0; -- alternate between 2 addresses reads for now
-      bus.is_valid_mem & AD = 0: 1;
-      TRUE:                      AD;
-    esac;
-  next(CTRL) :=
-    case
-      bus.is_valid_mem & AD = 1 & CTRL = read: write; -- alternate between read and write for now
-      bus.is_valid_mem & AD = 1 & CTRL = write: read;
-      TRUE: CTRL;
-    esac;
 
 
 ---------------------------------- Processor ---------------------------------
@@ -151,6 +134,25 @@ ASSIGN
     case
       bus.arb_gnt = l1_1: cache.valid;
       TRUE: memory.valid;
+    esac;
+
+  -------------- temporary test changes --------------
+  next(cache.req) :=
+    case
+      cache.req = TRUE & bus.is_valid_mem & cache.is_our_request : FALSE;
+      TRUE:                                                        TRUE; -- request infinitely often for now
+    esac;
+  next(cache.AD) :=
+    case
+      bus.is_valid_mem & cache.AD = 1: 0; -- alternate between 2 addresses reads for now
+      bus.is_valid_mem & cache.AD = 0: 1;
+      TRUE:                            cache.AD;
+    esac;
+  next(cache.CTRL) :=
+    case
+      bus.is_valid_mem & cache.AD = 1 & cache.CTRL = read: write; -- alternate between read and write for now
+      bus.is_valid_mem & cache.AD = 1 & cache.CTRL = write: read;
+      TRUE: cache.CTRL;
     esac;
 
 
