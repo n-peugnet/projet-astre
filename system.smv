@@ -6,7 +6,7 @@ VAR
   AD:      {0,1}; -- address
   DT:      boolean; -- data if CTRL is write
   CTRL:    {read, write};
-  arb_gnt: {l1_1, mem}; -- arbitre decision
+  arb_gnt: {none, l1_1, mem}; -- arbitre decision
   valid:   boolean; -- data on the bus is valid
 
   ------------- Computed state -------------
@@ -15,6 +15,7 @@ VAR
 
 ASSIGN
   is_valid_mem := arb_gnt = mem & valid;
+  is_valid_cache := arb_gnt = l1_1 & valid;
 
 ----------------------------------- Memory -----------------------------------
 MODULE Memory(bus)
@@ -104,9 +105,9 @@ ASSIGN
   -- bus arbitre --
   next(bus.arb_gnt) :=
     case
-      bus.arb_gnt = mem & cache.req & bus.valid = TRUE: l1_1; -- if mem data is valid on the bus, then next master is l1_1
-      bus.arb_gnt != mem:                               mem; -- if bus master is not mem, then next is mem
-      TRUE:                                             mem; -- default bus master is mem
+      cache.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
+      bus.is_valid_cache:                                   mem; -- if cache made a request, then next master is mem
+      TRUE:                                                 mem; -- default bus master is mem
     esac;
 
   -- bus out --
@@ -139,7 +140,7 @@ SPEC AX (bus.AD = memory.AD) -- not that important
 SPEC AX (bus.DT = memory.DT) -- not that important
 SPEC AX (bus.valid = memory.valid) -- not that important
 SPEC AG (bus.valid & bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL) -- if l1_1 is bus master, then bus out must be l1_in
-SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD])
+SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD]) -- if l1_1 reads data, then next value in bus is the requested value
 -- verify that the alternance is working (for now) --
 SPEC AG AF(cache.AD = 0)
 SPEC AG AF(cache.AD = 1)
