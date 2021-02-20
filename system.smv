@@ -90,6 +90,7 @@ ASSIGN
   init(req)  := TRUE;
 
   AD := processor.AD;
+  processor.DT := DT;
   next(DT) :=
     case
       processor.req = load & is_our_response: bus.DT;
@@ -107,11 +108,6 @@ ASSIGN
       is_our_response :      FALSE;
       processor.req != idle: TRUE;
       TRUE:                  req;
-    esac;
-  next(processor.DT) :=
-    case
-      processor.req = load & is_our_response : DT;
-      TRUE:                                    processor.DT;
     esac;
   next(processor.valid) :=
     case
@@ -135,7 +131,6 @@ ASSIGN
   init(req)   := load;
   init(AD)    := 0;
   init(REG)   := FALSE;
-  init(DT)    := FALSE;
   init(valid) := FALSE;
 
 
@@ -149,14 +144,14 @@ VAR
 
 ASSIGN
   ----- init values ----------
-  init(bus.arb_gnt) := l1_1;
+  init(bus.arb_gnt) := none;
 
   -- bus arbitre --
   next(bus.arb_gnt) :=
     case
       cache.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
-      bus.is_valid_cache:                                   mem; -- if cache made a request, then next master is mem
-      TRUE:                                                 mem; -- default bus master is mem
+      bus.is_valid_cache | bus.arb_gnt = mem:               mem; -- if cache made a request, then next master is mem
+      TRUE:                                                 none; -- default bus master is none
     esac;
 
   -- bus out --
@@ -205,27 +200,26 @@ ASSIGN
 --------------------------- Specifications ---------------------------
 SPEC AG AF(bus.arb_gnt = mem) -- mem is always infinitely often the master
 SPEC AG AF(bus.arb_gnt = l1_1) -- l1_1 is infinitely often the master
-SPEC AX (bus.AD = memory.AD) -- not that important
-SPEC AX (bus.DT = memory.DT) -- not that important
-SPEC AX (bus.valid = memory.valid) -- not that important
 
 -- if l1_1 is bus master, then bus out must be l1_in --
-SPEC AG (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid)
+SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) )
 
 -- if mem is bus master, then bus out must be mem_in --
-SPEC AG (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid)
+SPEC AG ( (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) )
 
 -- if l1_1 reads data, then next value in bus is the requested value --
-SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD])
+SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX AX (bus.DT = memory.data[cache.AD] & memory.valid) )
+SPEC AG AF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read)
 
 -- if l1_1 writes data, then next value in memory is the written value --
-SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX (memory.data[cache.AD] = cache.DT)
+SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX AX (memory.data[cache.AD] = cache.DT & memory.valid) )
+SPEC AG AF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write)
 
 -- if proc read a data, the the read value must be the same as the one in memory --
-SPEC AG (processor.valid & processor.req = load) -> (processor.DT = memory.data[processor.AD])
+SPEC AG ( (processor.valid & processor.req = load) -> (processor.DT = memory.data[processor.AD]) )
 SPEC AG AF(processor.valid)
 
-SPEC AG (processor.valid & processor.req = store) -> (processor.REG = memory.data[processor.AD])
+SPEC AG ( (processor.valid & processor.req = store) -> (processor.REG = memory.data[processor.AD]) )
 
 -- verify that the alternance is working (for now) --
 SPEC AG AF(memory.data[0] = TRUE)
