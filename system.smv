@@ -31,6 +31,7 @@ ASSIGN
   init(data[1]) := TRUE;
   init(AD)      := 0;
   init(DT)      := FALSE;
+  init(CTRL)    := read;
   init(valid)   := FALSE;
 
   ---------- internal values ---------
@@ -45,10 +46,20 @@ ASSIGN
       TRUE:                                               data[1];
     esac;
   ------------ bus values ------------
+  next(AD) :=
+    case
+      bus.valid: bus.AD;
+      TRUE: AD;
+    esac;
   next(DT) :=
     case
       bus.valid & bus.CTRL = read: data[bus.AD];
       TRUE: DT;
+    esac;
+  next(CTRL) :=
+    case
+      bus.valid: bus.CTRL;
+      TRUE: CTRL;
     esac;
   next(valid) :=
     case
@@ -57,7 +68,7 @@ ASSIGN
     esac;
 
 ------------------------------------ Cache -----------------------------------
-MODULE Cache(bus, processor)
+MODULE Cache(bus, processor, id)
 VAR
   ---------- internal values ---------
   AD:   {0,1}; -- address
@@ -68,15 +79,44 @@ VAR
 
   ------------- Computed state -------------
   is_our_request: boolean;
+  is_our_response: boolean;
 
 ASSIGN
   is_our_request := bus.AD = AD & bus.CTRL = CTRL;
+  is_our_response := req = TRUE & bus.is_valid_mem & is_our_request;
 
   init(AD)   := 0;
   init(DT)   := FALSE;
   init(CTRL) := read;
-  init(valid):= FALSE;
   init(req)  := TRUE;
+
+  next(AD) :=
+    case
+      processor.req = load: processor.AD;
+      TRUE: AD;
+    esac;
+  next(DT) :=
+    case
+      processor.req = store: processor.DT;
+      TRUE: DT;
+    esac;
+  next(CTRL) :=
+    case
+      processor.req = load: read;
+      TRUE: CTRL;
+    esac;
+  next(req) :=
+    case
+      is_our_response : FALSE;
+      TRUE:             TRUE; -- request infinitely often for now
+    esac;
+  next(processor.valid) :=
+    case
+      is_our_response : TRUE;
+      TRUE:             FALSE; -- default is not valid
+    esac;
+
+  valid := bus.arb_gnt = id & req;
 
 
 ---------------------------------- Processor ---------------------------------
@@ -88,7 +128,7 @@ VAR
   valid: boolean; -- if data is valid
 
 ASSIGN
-  init(req)   := idle;
+  init(req)   := load;
   init(AD)    := 0;
   init(DT)    := FALSE;
   init(valid) := FALSE;
@@ -99,7 +139,7 @@ MODULE main
 VAR
   bus: Bus;
   processor: Processor;
-  cache: Cache(bus, proc);
+  cache: Cache(bus, processor, l1_1);
   memory: Memory(bus);
 
 ASSIGN
@@ -137,22 +177,17 @@ ASSIGN
     esac;
 
   -------------- temporary test changes --------------
-  next(cache.req) :=
+  next(processor.AD) :=
     case
-      cache.req = TRUE & bus.is_valid_mem & cache.is_our_request : FALSE;
-      TRUE:                                                        TRUE; -- request infinitely often for now
+      processor.valid & processor.AD = 1: 0; -- alternate between 2 addresses reads for now
+      processor.valid & processor.AD = 0: 1;
+      TRUE: processor.AD;
     esac;
-  next(cache.AD) :=
+  next(processor.req) :=
     case
-      bus.is_valid_mem & cache.AD = 1: 0; -- alternate between 2 addresses reads for now
-      bus.is_valid_mem & cache.AD = 0: 1;
-      TRUE:                            cache.AD;
-    esac;
-  next(cache.CTRL) :=
-    case
-      bus.is_valid_mem & cache.AD = 1 & cache.CTRL = read: write; -- alternate between read and write for now
-      bus.is_valid_mem & cache.AD = 1 & cache.CTRL = write: read;
-      TRUE: cache.CTRL;
+      processor.valid & processor.AD = 1 & processor.req = load: store; -- alternate between load and store for now
+      processor.valid & processor.AD = 1 & processor.req = store: load;
+      TRUE: processor.req;
     esac;
 
 
@@ -166,8 +201,13 @@ SPEC AG (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTR
 SPEC AG (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) -- if mem is bus master, then bus out must be mem_in
 SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX (bus.DT = memory.data[cache.AD]) -- if l1_1 reads data, then next value in bus is the requested value
 SPEC AG (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX (memory.data[cache.AD] = cache.DT) -- if l1_1 writes data, then next value in memory is the written value
+SPEC AG AF(cache.is_our_response)
 -- verify that the alternance is working (for now) --
 SPEC AG AF(cache.AD = 0 & cache.CTRL = read)
 SPEC AG AF(cache.AD = 1 & cache.CTRL = read)
-SPEC AG AF(cache.AD = 0 & cache.CTRL = write)
-SPEC AG AF(cache.AD = 1 & cache.CTRL = write)
+-- SPEC AG AF(cache.AD = 0 & cache.CTRL = write)
+-- SPEC AG AF(cache.AD = 1 & cache.CTRL = write)
+SPEC AG AF(processor.AD = 0 & processor.req = load)
+SPEC AG AF(processor.AD = 1 & processor.req = load)
+SPEC AG AF(processor.AD = 0 & processor.req = store)
+SPEC AG AF(processor.AD = 1 & processor.req = store)
