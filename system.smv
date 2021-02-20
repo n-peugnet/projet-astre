@@ -100,8 +100,8 @@ ASSIGN
 MODULE Processor
 VAR
   req:   {idle, load, store}; -- processor request
-  AD:    {0,1}; -- requested adress
-  DT:    boolean; -- data from l1
+  AD:    {0,1}; -- requested address
+  DT:    boolean; -- data from or to l1 : (l1 -> cpu) or (cpu -> l1)
   valid: boolean; -- if data is valid
 
 ASSIGN
