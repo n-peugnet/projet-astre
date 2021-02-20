@@ -2,16 +2,16 @@
 ------------------------------------- Bus ------------------------------------
 MODULE Bus
 VAR
-  AD:      boolean; -- address
+  AD:      {0,1}; -- address
   DT:      boolean; -- data if CTRL is write
-  CTRL:    boolean; -- 0: read, 1: write
+  CTRL:    {read, write};
   arb_gnt: {l1_1, mem}; -- arbitre decision
   valid:   boolean; -- data on the bus is valid
 
 ASSIGN
-  init(AD)      := FALSE;
+  init(AD)      := 0;
   init(DT)      := FALSE;
-  init(CTRL)    := FALSE;
+  init(CTRL)    := read;
   init(arb_gnt) := mem;
   init(valid)   := FALSE;
 
@@ -20,25 +20,37 @@ ASSIGN
 MODULE Memory(bus)
 VAR
   data: array 0..1 of boolean; -- internal data
-  DT: boolean; -- response to bus
+  AD:    {0,1}; -- requested adress
+  DT:    boolean; -- response to bus
+  valid: boolean; -- if data is valid
 
 ASSIGN
   init(data[0]) := FALSE;
   init(data[1]) := FALSE;
+  init(AD)      := 0;
   init(DT)      := FALSE;
+  init(valid)   := FALSE;
+
+  next(DT) :=
+    case
+      bus.valid & bus.CTRL = read: data[bus.AD];
+      TRUE: DT;
+    esac;
 
 ------------------------------------ Cache -----------------------------------
 MODULE Cache(bus, processor)
 VAR
-  AD:   boolean; -- address
+  AD:   {0,1}; -- address
   DT:   boolean; -- data if CTRL is write
-  CTRL: boolean; -- 0: read, 1: write
+  CTRL: {read, write};
+  valid:boolean; -- if data is valid
   req:  boolean; -- cache request for bus
 
 ASSIGN
-  init(AD)   := FALSE;
+  init(AD)   := 0;
   init(DT)   := FALSE;
-  init(CTRL) := FALSE;
+  init(CTRL) := read;
+  init(valid):= FALSE;
   init(req)  := FALSE;
 
 
@@ -46,13 +58,13 @@ ASSIGN
 MODULE Processor
 VAR
   req:   {idle, load, store}; -- processor request
-  AD:    boolean; -- requested adress
+  AD:    {0,1}; -- requested adress
   DT:    boolean; -- data from l1
   valid: boolean; -- if data is valid
 
 ASSIGN
   init(req)   := idle;
-  init(AD)    := FALSE;
+  init(AD)    := 0;
   init(DT)    := FALSE;
   init(valid) := FALSE;
 
