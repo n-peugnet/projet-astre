@@ -133,6 +133,21 @@ ASSIGN
   init(REG)   := FALSE;
   init(valid) := FALSE;
 
+  next(req) :=
+    case
+      valid: {idle, load, store};
+      TRUE: req;
+    esac;
+  next(AD) :=
+    case
+      valid: {0,1};
+      TRUE: AD;
+    esac;
+  next(REG) :=
+    case
+      valid: {TRUE,FALSE};
+      TRUE: REG;
+    esac;
 
 ------------------------------------ Main ------------------------------------
 MODULE main
@@ -177,67 +192,68 @@ ASSIGN
     esac;
 
   -------------- temporary test changes --------------
-  next(processor.AD) :=
-    case
-      processor.valid & processor.AD = 1: 0; -- alternate between 2 addresses for now
-      processor.valid & processor.AD = 0: 1;
-      TRUE: processor.AD;
-    esac;
-  next(processor.REG) :=
-    case
-      processor.valid & processor.AD = 1 & processor.REG = TRUE: FALSE; -- alternate between datas for now
-      processor.valid & processor.AD = 1 & processor.REG = FALSE: TRUE;
-      TRUE: processor.REG;
-    esac;
-  next(processor.req) :=
-    case
-      processor.valid & processor.AD = 1 & processor.REG = TRUE & processor.req = load: store; -- alternate between load and store for now
-      processor.valid & processor.AD = 1 & processor.REG = TRUE & processor.req = store: load;
-      TRUE: processor.req;
-    esac;
+  -- next(processor.AD) :=
+  --   case
+  --     processor.valid & processor.AD = 1: 0; -- alternate between 2 addresses for now
+  --     processor.valid & processor.AD = 0: 1;
+  --     TRUE: processor.AD;
+  --   esac;
+  -- next(processor.REG) :=
+  --   case
+  --     processor.valid & processor.AD = 1 & processor.REG = TRUE: FALSE; -- alternate between datas for now
+  --     processor.valid & processor.AD = 1 & processor.REG = FALSE: TRUE;
+  --     TRUE: processor.REG;
+  --   esac;
+  -- next(processor.req) :=
+  --   case
+  --     processor.valid & processor.AD = 1 & processor.REG = TRUE & processor.req = load: store; -- alternate between load and store for now
+  --     processor.valid & processor.AD = 1 & processor.REG = TRUE & processor.req = store: load;
+  --     TRUE: processor.req;
+  --   esac;
 
 
 --------------------------- Specifications ---------------------------
-SPEC AG AF(bus.arb_gnt = mem) -- mem is always infinitely often the master
-SPEC AG AF(bus.arb_gnt = l1_1) -- l1_1 is infinitely often the master
+-- SPEC AG AF(bus.arb_gnt = mem) -- mem is always infinitely often the master
+-- SPEC AG AF(bus.arb_gnt = l1_1) -- l1_1 is infinitely often the master
 
 -- if l1_1 is bus master, then bus out must be l1_in --
 SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) )
+SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD != cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) )
 
 -- if mem is bus master, then bus out must be mem_in --
 SPEC AG ( (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) )
 
 -- if l1_1 reads data, then next value in bus is the requested value --
 SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX AX (bus.DT = memory.data[cache.AD] & memory.valid) )
-SPEC AG AF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read)
+-- SPEC AG AF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read)
 
 -- if l1_1 writes data, then next value in memory is the written value --
 SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX AX (memory.data[cache.AD] = cache.DT & memory.valid) )
-SPEC AG AF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write)
+-- SPEC AG AF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write)
 
 -- if proc read a data, the the read value must be the same as the one in memory --
 SPEC AG ( (processor.valid & processor.req = load) -> (processor.DT = memory.data[processor.AD]) )
-SPEC AG AF(processor.valid)
+-- SPEC AG AF(processor.valid)
 
 SPEC AG ( (processor.valid & processor.req = store) -> (processor.REG = memory.data[processor.AD]) )
 
 -- verify that the alternance is working (for now) --
-SPEC AG AF(memory.data[0] = TRUE)
-SPEC AG AF(memory.data[0] = FALSE)
-SPEC AG AF(memory.data[1] = TRUE)
-SPEC AG AF(memory.data[1] = FALSE)
+-- SPEC AG AF(memory.data[0] = TRUE)
+-- SPEC AG AF(memory.data[0] = FALSE)
+-- SPEC AG AF(memory.data[1] = TRUE)
+-- SPEC AG AF(memory.data[1] = FALSE)
 
-SPEC AG AF(cache.AD = 0 & cache.CTRL = read)
-SPEC AG AF(cache.AD = 1 & cache.CTRL = read)
-SPEC AG AF(cache.AD = 0 & cache.CTRL = write)
-SPEC AG AF(cache.AD = 1 & cache.CTRL = write)
-SPEC AG AF(cache.is_our_response)
-SPEC AG AF(processor.AD = 0 & processor.req = load & processor.REG = TRUE)
-SPEC AG AF(processor.AD = 1 & processor.req = load & processor.REG = TRUE)
-SPEC AG AF(processor.AD = 0 & processor.req = store & processor.REG = TRUE)
-SPEC AG AF(processor.AD = 1 & processor.req = store & processor.REG = TRUE)
-SPEC AG AF(processor.AD = 0 & processor.req = load & processor.REG = FALSE)
-SPEC AG AF(processor.AD = 1 & processor.req = load & processor.REG = FALSE)
-SPEC AG AF(processor.AD = 0 & processor.req = store & processor.REG = FALSE)
-SPEC AG AF(processor.AD = 1 & processor.req = store & processor.REG = FALSE)
+-- SPEC AG AF(cache.AD = 0 & cache.CTRL = read)
+-- SPEC AG AF(cache.AD = 1 & cache.CTRL = read)
+-- SPEC AG AF(cache.AD = 0 & cache.CTRL = write)
+-- SPEC AG AF(cache.AD = 1 & cache.CTRL = write)
+-- SPEC AG AF(cache.is_our_response)
+-- SPEC AG AF(processor.AD = 0 & processor.req = load & processor.REG = TRUE)
+-- SPEC AG AF(processor.AD = 1 & processor.req = load & processor.REG = TRUE)
+-- SPEC AG AF(processor.AD = 0 & processor.req = store & processor.REG = TRUE)
+-- SPEC AG AF(processor.AD = 1 & processor.req = store & processor.REG = TRUE)
+-- SPEC AG AF(processor.AD = 0 & processor.req = load & processor.REG = FALSE)
+-- SPEC AG AF(processor.AD = 1 & processor.req = load & processor.REG = FALSE)
+-- SPEC AG AF(processor.AD = 0 & processor.req = store & processor.REG = FALSE)
+-- SPEC AG AF(processor.AD = 1 & processor.req = store & processor.REG = FALSE)
 
