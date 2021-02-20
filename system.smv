@@ -8,14 +8,6 @@ VAR
   arb_gnt: {l1_1, mem}; -- arbitre decision
   valid:   boolean; -- data on the bus is valid
 
-ASSIGN
-  init(AD)      := 0;
-  init(DT)      := FALSE;
-  init(CTRL)    := read;
-  init(arb_gnt) := mem;
-  init(valid)   := FALSE;
-
-
 ----------------------------------- Memory -----------------------------------
 MODULE Memory(bus)
 VAR
@@ -51,7 +43,7 @@ ASSIGN
   init(DT)   := FALSE;
   init(CTRL) := read;
   init(valid):= FALSE;
-  init(req)  := FALSE;
+  init(req)  := TRUE;
 
 
 ---------------------------------- Processor ---------------------------------
@@ -76,3 +68,44 @@ VAR
   processor: Processor;
   cache: Cache(bus, proc);
   memory: Memory(bus);
+
+ASSIGN
+  ----- init values ----------
+  init(bus.arb_gnt) := l1_1;
+
+  -- bus arbitre --
+  next(bus.arb_gnt) :=
+    case
+      bus.arb_gnt = mem & cache.req & bus.valid = TRUE: l1_1;
+      bus.arb_gnt != mem: mem;
+      TRUE: mem;
+    esac;
+
+  -- bus out --
+  bus.AD :=
+    case
+      bus.arb_gnt = l1_1: cache.AD;
+      TRUE: memory.AD;
+    esac;
+  bus.DT :=
+    case
+      bus.arb_gnt = l1_1: cache.DT;
+      TRUE: memory.DT;
+    esac;
+  bus.CTRL :=
+    case
+      bus.arb_gnt = l1_1: cache.CTRL;
+      TRUE: read;
+    esac;
+  bus.valid :=
+    case
+      bus.arb_gnt = l1_1: cache.valid;
+      TRUE: memory.valid;
+    esac;
+
+
+--------------------------- Specifications ---------------------------
+SPEC AG AF(bus.arb_gnt = mem)
+SPEC AX (bus.AD = memory.AD)
+SPEC AX (bus.DT = memory.DT)
+SPEC AX (bus.valid = memory.valid)
