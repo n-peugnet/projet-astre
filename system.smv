@@ -23,6 +23,7 @@ VAR
   data: array 0..1 of boolean; -- internal data
   AD:    {0,1}; -- requested adress
   DT:    boolean; -- response to bus
+  CTRL:  {read, write};
   valid: boolean; -- if data is valid
 
 ASSIGN
@@ -50,13 +51,19 @@ ASSIGN
 ------------------------------------ Cache -----------------------------------
 MODULE Cache(bus, processor)
 VAR
+  ---------- internal values ---------
   AD:   {0,1}; -- address
   DT:   boolean; -- data if CTRL is write
   CTRL: {read, write};
   valid:boolean; -- if data is valid
   req:  boolean; -- cache request for bus
 
+  ------------- Computed state -------------
+  is_our_request: boolean;
+
 ASSIGN
+  is_our_request := bus.AD = AD & bus.CTRL = CTRL;
+
   init(AD)   := 0;
   init(DT)   := FALSE;
   init(CTRL) := read;
@@ -64,8 +71,8 @@ ASSIGN
   init(req)  := TRUE;
   next(req) :=
     case
-      req = TRUE & bus.is_valid_mem: FALSE;
-      TRUE:                          TRUE; -- request infinitely often for now
+      req = TRUE & bus.is_valid_mem & is_our_request : FALSE;
+      TRUE:                                            TRUE; -- request infinitely often for now
     esac;
   next(AD) :=
     case
@@ -124,7 +131,7 @@ ASSIGN
   bus.CTRL :=
     case
       bus.arb_gnt = l1_1: cache.CTRL;
-      TRUE: read;
+      TRUE: memory.CTRL;
     esac;
   bus.valid :=
     case
