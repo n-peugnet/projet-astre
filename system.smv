@@ -87,7 +87,7 @@ ASSIGN
 
   init(DT)   := FALSE;
   init(CTRL) := read;
-  init(req)  := TRUE;
+  init(req)  := FALSE;
 
   AD := processor.AD;
   processor.DT := DT;
@@ -106,7 +106,7 @@ ASSIGN
   next(req) :=
     case
       is_our_response :      FALSE;
-      processor.req != idle: TRUE;
+      processor.req != idle & !processor.valid: TRUE;
       TRUE:                  req;
     esac;
   next(processor.valid) :=
@@ -121,14 +121,13 @@ ASSIGN
 ---------------------------------- Processor ---------------------------------
 MODULE Processor
 VAR
-  req:   {idle, load, store}; -- processor request
+  req:   {idle, load, store}; -- processor request to cache
   AD:    {0,1}; -- requested address
   REG:   boolean; -- proc data
   DT:    boolean; -- data from l1
   valid: boolean; -- if data is valid
 
 ASSIGN
-  init(req)   := load;
   init(AD)    := 0;
   init(REG)   := FALSE;
   init(valid) := FALSE;
@@ -136,6 +135,7 @@ ASSIGN
   next(req) :=
     case
       valid: {idle, load, store};
+      req = idle: {idle, load, store};
       TRUE: req;
     esac;
   next(AD) :=
@@ -191,52 +191,39 @@ ASSIGN
       TRUE: memory.valid;
     esac;
 
-  -------------- temporary test changes --------------
-  -- next(processor.AD) :=
-  --   case
-  --     processor.valid & processor.AD = 1: 0; -- alternate between 2 addresses for now
-  --     processor.valid & processor.AD = 0: 1;
-  --     TRUE: processor.AD;
-  --   esac;
-  -- next(processor.REG) :=
-  --   case
-  --     processor.valid & processor.AD = 1 & processor.REG = TRUE: FALSE; -- alternate between datas for now
-  --     processor.valid & processor.AD = 1 & processor.REG = FALSE: TRUE;
-  --     TRUE: processor.REG;
-  --   esac;
-  -- next(processor.req) :=
-  --   case
-  --     processor.valid & processor.AD = 1 & processor.REG = TRUE & processor.req = load: store; -- alternate between load and store for now
-  --     processor.valid & processor.AD = 1 & processor.REG = TRUE & processor.req = store: load;
-  --     TRUE: processor.req;
-  --   esac;
-
-
 --------------------------- Specifications ---------------------------
-SPEC EG EF(bus.arb_gnt = mem) -- mem is always infinitely often the master
-SPEC EG EF(bus.arb_gnt = l1_1) -- l1_1 is infinitely often the master
+ -- there is a branch where mem is infinitely often the master
+SPEC EG EF(bus.arb_gnt = mem)
+ -- there is a branch where l1_1 is infinitely often the master
+SPEC EG EF(bus.arb_gnt = l1_1)
 
+
+------------------ bus --------------------
 -- if l1_1 is bus master, then bus out must be l1_in --
 SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) )
-
 -- if mem is bus master, then bus out must be mem_in --
 SPEC AG ( (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) )
+-- if bus is l1_1 then it should also be valid (not yes respected) --
+-- SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.valid) )
 
+---------------- cache -------------------
 -- if l1_1 reads data, then next value in bus is the requested value --
 SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX AX (bus.DT = memory.data[cache.AD] & memory.valid) )
 SPEC EG EF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read)
-
 -- if l1_1 writes data, then next value in memory is the written value --
 SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX AX (memory.data[cache.AD] = cache.DT & memory.valid) )
 SPEC EG EF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write)
 
+-------------- processor -----------------
+SPEC EG EF(processor.valid & processor.req != idle)
 -- if proc read a data, the the read value must be the same as the one in memory --
 SPEC AG ( (processor.valid & processor.req = load) -> (processor.DT = memory.data[processor.AD]) )
-SPEC EG EF(processor.valid)
-
+-- if proc read a data, the the read value must be the same as the one in memory --
 SPEC AG ( (processor.valid & processor.req = store) -> (processor.REG = memory.data[processor.AD]) )
+-- processor can quit idle req state --
+SPEC AG ( (processor.req = idle) -> EF (processor.req != idle) )
 
--- verify that the alternance is working (for now) --
+-- verify that there are branches whith these cases --
 SPEC EG EF(memory.data[0] = TRUE)
 SPEC EG EF(memory.data[0] = FALSE)
 SPEC EG EF(memory.data[1] = TRUE)
