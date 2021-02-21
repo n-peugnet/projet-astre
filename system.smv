@@ -6,8 +6,9 @@ VAR
   AD:      {0,1}; -- address
   DT:      boolean; -- data if CTRL is write
   CTRL:    {read, write};
-  arb_gnt: {none, l1_1, mem}; -- arbitre decision
   valid:   boolean; -- data on the bus is valid
+  -------------- arbitre data --------------
+  arb_gnt: {none, l1_1, mem}; -- arbitre decision
 
   ------------- computed state -------------
   is_valid_mem:  boolean;
@@ -73,32 +74,53 @@ ASSIGN
 MODULE Cache(bus, processor, id)
 VAR
   ------------- internal values ------------
-  TAG: {0,1}; -- cached value tag
+  TAG: {NULL,0,1}; -- cached value tag
   REG: boolean; -- cached value
-  --------------- out values ---------------
+  ------------- bus out values -------------
   AD:   {0,1}; -- address
   DT:   boolean; -- data if CTRL is write
   CTRL: {read, write};
   valid:boolean; -- if data is valid
+  ------------- arb out values -------------
   req:  boolean; -- cache request for bus
 
   ------------- Computed state -------------
   is_our_request: boolean;
   is_our_response: boolean;
+  is_load_response: boolean;
+  is_load_in_cache: boolean;
 
 ASSIGN
   is_our_request := bus.AD = AD & bus.CTRL = CTRL;
   is_our_response := req = TRUE & bus.is_valid_mem & is_our_request;
+  is_load_response := processor.req = load & is_our_response;
+  is_load_in_cache := processor.req = load & processor.AD = TAG;
 
+  init(TAG)  := NULL;
   init(DT)   := FALSE;
   init(CTRL) := read;
   init(req)  := FALSE;
 
+  ------------- internal values ------------
+  next(TAG) :=
+    case
+      is_load_response: bus.AD; -- fill cache TAG if the requested data is on the bus
+      processor.req = store & processor.AD = TAG: NULL; -- evict cache if store is same adress
+      TRUE: TAG; -- keep cache in any other configuration
+    esac;
+  next(REG) :=
+    case
+      is_load_response: bus.DT;
+      TRUE: REG;
+    esac;
+
   ------------- proc out values ------------
-  processor.DT := DT; -- proc out data is data taken from bus
+  processor.DT := REG; -- proc out data is data taken from register
   next(processor.valid) :=
     case
+      processor.valid: FALSE; -- always stay valid 1 cycle only
       is_our_response : TRUE; -- proc out is valid after the data on the bus is our response
+      is_load_in_cache: TRUE; --                         the data in cache is the required one
       TRUE:             FALSE; -- default is not valid
     esac;
   ------------- bus out values -------------
@@ -106,7 +128,7 @@ ASSIGN
   valid := bus.arb_gnt = id & req;
   next(DT) :=
     case
-      processor.req = load & is_our_response: bus.DT;
+      is_load_response: bus.DT;
       processor.req = store: processor.REG;
       TRUE: DT;
     esac;
@@ -119,7 +141,7 @@ ASSIGN
   next(req) :=
     case
       is_our_response :      FALSE;
-      processor.req != idle & !processor.valid: TRUE;
+      processor.req != idle & !processor.valid & !is_load_in_cache: TRUE;
       TRUE:                  req;
     esac;
 
@@ -217,12 +239,15 @@ SPEC AG ( (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.
 -- SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.valid) )
 
 ---------------- cache -------------------
--- if l1_1 reads data, then next value in bus is the requested value --
+-- if l1_1 reads data, then next value in bus is the requested value and memory response takes 2 cycles --
 SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX AX (bus.DT = memory.data[cache.AD] & memory.valid) )
 SPEC EG EF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read)
--- if l1_1 writes data, then next value in memory is the written value --
+-- if l1_1 writes data, then next value in memory is the written value and memory response takes 2 cycles --
 SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX AX (memory.data[cache.AD] = cache.DT & memory.valid) )
 SPEC EG EF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write)
+-- if proc reads data present in cache, then response should be the value of the cache register and should be next cycle --
+SPEC AG ( (processor.req = load & processor.AD = cache.TAG & !processor.valid) -> AX (processor.DT = cache.REG & processor.valid) )
+SPEC EG EF(processor.req = load & processor.AD = cache.TAG & !processor.valid)
 
 -------------- processor -----------------
 SPEC EG EF(processor.valid & processor.req != idle)
@@ -234,8 +259,8 @@ SPEC AG ( (processor.valid & processor.req = store) -> (processor.REG = memory.d
 SPEC AG ( (processor.req = idle) -> EF (processor.req != idle) )
 -- processor can quit load req state --
 SPEC AG ( (processor.req = load) -> EF (processor.req != load) )
--- processor can quit write req state --
-SPEC AG ( (processor.req = write) -> EF (processor.req != write) )
+-- processor can quit store req state --
+SPEC AG ( (processor.req = store) -> EF (processor.req != store) )
 
 ---------------- other -------------------
 -- verify that there are branches whith these cases --
