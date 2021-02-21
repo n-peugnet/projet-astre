@@ -222,6 +222,10 @@ SPEC AG ( (processor.valid & processor.req = load) -> (processor.DT = memory.dat
 SPEC AG ( (processor.valid & processor.req = store) -> (processor.REG = memory.data[processor.AD]) )
 -- processor can quit idle req state --
 SPEC AG ( (processor.req = idle) -> EF (processor.req != idle) )
+-- processor can quit load req state --
+SPEC AG ( (processor.req = load) -> EF (processor.req != load) )
+-- processor can quit write req state --
+SPEC AG ( (processor.req = write) -> EF (processor.req != write) )
 
 -- verify that there are branches whith these cases --
 SPEC EG EF(memory.data[0] = TRUE)
