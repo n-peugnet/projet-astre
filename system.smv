@@ -2,14 +2,14 @@
 ------------------------------------- Bus ------------------------------------
 MODULE Bus
 VAR
-  ------------- Real Bus data --------------
+  -------------- bus out data --------------
   AD:      {0,1}; -- address
   DT:      boolean; -- data if CTRL is write
   CTRL:    {read, write};
   arb_gnt: {none, l1_1, mem}; -- arbitre decision
   valid:   boolean; -- data on the bus is valid
 
-  ------------- Computed state -------------
+  ------------- computed state -------------
   is_valid_mem:  boolean;
   is_valid_cache: boolean;
 
@@ -20,7 +20,9 @@ ASSIGN
 ----------------------------------- Memory -----------------------------------
 MODULE Memory(bus)
 VAR
+  ------------- internal values ------------
   data: array 0..1 of boolean; -- internal data
+  --------------- out values ---------------
   AD:    {0,1}; -- requested adress
   DT:    boolean; -- response to bus
   CTRL:  {read, write};
@@ -34,7 +36,7 @@ ASSIGN
   init(CTRL)    := read;
   init(valid)   := FALSE;
 
-  ---------- internal values ---------
+  ------------- internal values ------------
   next(data[0]) :=
     case
       bus.is_valid_cache & bus.CTRL = write & bus.AD = 0: bus.DT;
@@ -45,7 +47,7 @@ ASSIGN
       bus.is_valid_cache & bus.CTRL = write & bus.AD = 1: bus.DT;
       TRUE:                                               data[1];
     esac;
-  ------------ bus values ------------
+  --------------- out values ---------------
   next(AD) :=
     case
       bus.valid: bus.AD;
@@ -70,7 +72,10 @@ ASSIGN
 ------------------------------------ Cache -----------------------------------
 MODULE Cache(bus, processor, id)
 VAR
-  ---------- internal values ---------
+  ------------- internal values ------------
+  TAG: {0,1}; -- cached value tag
+  REG: boolean; -- cached value
+  --------------- out values ---------------
   AD:   {0,1}; -- address
   DT:   boolean; -- data if CTRL is write
   CTRL: {read, write};
@@ -89,8 +94,16 @@ ASSIGN
   init(CTRL) := read;
   init(req)  := FALSE;
 
+  ------------- proc out values ------------
+  processor.DT := DT; -- proc out data is data taken from bus
+  next(processor.valid) :=
+    case
+      is_our_response : TRUE; -- proc out is valid after the data on the bus is our response
+      TRUE:             FALSE; -- default is not valid
+    esac;
+  ------------- bus out values -------------
   AD := processor.AD;
-  processor.DT := DT;
+  valid := bus.arb_gnt = id & req;
   next(DT) :=
     case
       processor.req = load & is_our_response: bus.DT;
@@ -109,21 +122,16 @@ ASSIGN
       processor.req != idle & !processor.valid: TRUE;
       TRUE:                  req;
     esac;
-  next(processor.valid) :=
-    case
-      is_our_response : TRUE;
-      TRUE:             FALSE; -- default is not valid
-    esac;
-
-  valid := bus.arb_gnt = id & req;
-
 
 ---------------------------------- Processor ---------------------------------
 MODULE Processor
 VAR
+  ------------- cache out values -----------
   req:   {idle, load, store}; -- processor request to cache
   AD:    {0,1}; -- requested address
+  ------------- internal values ------------
   REG:   boolean; -- proc data
+  ------------- cache in values ------------
   DT:    boolean; -- data from l1
   valid: boolean; -- if data is valid
 
@@ -132,6 +140,7 @@ ASSIGN
   init(REG)   := FALSE;
   init(valid) := FALSE;
 
+  ------------- cache out values -----------
   next(req) :=
     case
       valid: {idle, load, store};
@@ -143,6 +152,7 @@ ASSIGN
       valid: {0,1};
       TRUE: AD;
     esac;
+  ------------- internal values ------------
   next(REG) :=
     case
       valid: {TRUE,FALSE};
@@ -158,10 +168,10 @@ VAR
   memory: Memory(bus);
 
 ASSIGN
-  ----- init values ----------
+  -------------- init values ---------------
   init(bus.arb_gnt) := none;
 
-  -- bus arbitre --
+  -------------- bus arbitre ---------------
   next(bus.arb_gnt) :=
     case
       cache.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
@@ -169,7 +179,7 @@ ASSIGN
       TRUE:                                                 none; -- default bus master is none
     esac;
 
-  -- bus out --
+  ------------- bus out values -------------
   bus.AD :=
     case
       bus.arb_gnt = l1_1: cache.AD;
@@ -198,7 +208,7 @@ SPEC EG EF(bus.arb_gnt = mem)
 SPEC EG EF(bus.arb_gnt = l1_1)
 
 
------------------- bus --------------------
+----------------- bus --------------------
 -- if l1_1 is bus master, then bus out must be l1_in --
 SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) )
 -- if mem is bus master, then bus out must be mem_in --
@@ -227,6 +237,7 @@ SPEC AG ( (processor.req = load) -> EF (processor.req != load) )
 -- processor can quit write req state --
 SPEC AG ( (processor.req = write) -> EF (processor.req != write) )
 
+---------------- other -------------------
 -- verify that there are branches whith these cases --
 SPEC EG EF(memory.data[0] = TRUE)
 SPEC EG EF(memory.data[0] = FALSE)
