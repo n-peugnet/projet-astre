@@ -1,0 +1,761 @@
+$ make DEBUG=1
+>>> 17:42:50.895
+../ASTRE/NuSMV-2.6.0/bin/NuSMV -v 3 system.smv
+*** This is NuSMV 2.6.0 (compiled on Wed Oct 14 15:36:56 2015)
+*** Enabled addons are: compass
+*** For more information on NuSMV see <http://nusmv.fbk.eu>
+*** or email to <nusmv-users@list.fbk.eu>.
+*** Please report bugs to <Please report bugs to <nusmv-users@fbk.eu>>
+
+*** Copyright (c) 2010-2014, Fondazione Bruno Kessler
+
+*** This version of NuSMV is linked to the CUDD library version 2.4.1
+*** Copyright (c) 1995-2004, Regents of the University of Colorado
+
+*** This version of NuSMV is linked to the MiniSat SAT solver. 
+*** See http://minisat.se/MiniSat.html
+*** Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
+*** Copyright (c) 2007-2010, Niklas Sorensson
+
+Starting the batch interaction.
+Parsing file "system.smv" ..... done.
+Initializing the flattener...
+FlatHierarchy: calculating vars constrains...
+FlatHierarchy: vars constrains calculated
+No check for input vars
+checking for multiple assignments in process ...
+Done
+checking for circular assignments in process ...
+Done
+TraceMgr: registered layer 'model'
+...done
+
+Initializing global boolean encoding...
+Global boolean encoding initialized.
+BoolEnc committing layer 'model'
+
+Heuristics "basic" is going to be used to create varordering statically
+
+Initializing global BDD encoding...
+Global BDD encoding initialized.
+
+Creating the scalar FSM...
+FlatHierarchy: calculating vars constrains...
+FlatHierarchy: vars constrains calculated
+Successfully created the scalar FSM
+
+Creating the BDD FSM...
+Reading the trans variable ordering from the BDD encoder
+Successfully created the BDD FSM
+
+The model has been built from file system.smv.
+Ordering properties by COI size
+Initializing Cone Of Influence...
+*** INIT COI ***
+Variable  bus.AD
+  Initial coi: {bus.arb_gnt, c1.AD, c2.AD, memory.AD}
+Variable  bus.DT
+  Initial coi: {bus.arb_gnt, c1.DT, c2.DT, memory.DT}
+Variable  bus.CTRL
+  Initial coi: {bus.arb_gnt, c1.CTRL, c2.CTRL, memory.CTRL}
+Variable  bus.valid
+  Initial coi: {bus.arb_gnt, c1.valid, c2.valid, memory.valid}
+Variable  bus.arb_gnt
+  Initial coi: {c1.req, bus.is_valid_mem, bus.arb_gnt, c2.req, bus.is_valid_cache}
+Variable  bus.is_valid_mem
+  Initial coi: {bus.arb_gnt, bus.valid}
+Variable  bus.is_valid_cache
+  Initial coi: {bus.valid, bus.arb_gnt}
+Variable  p1.req
+  Initial coi: {p1.valid, p1.req}
+Variable  p1.AD
+  Initial coi: {p1.valid, p1.AD}
+Variable  p1.REG
+  Initial coi: {p1.valid, p1.REG}
+Variable  p1.DT
+  Initial coi: {c1.REG}
+Variable  p1.valid
+  Initial coi: {p1.valid, c1.is_our_response, c1.is_load_in_cache}
+Variable  p2.req
+  Initial coi: {p2.valid, p2.req}
+Variable  p2.AD
+  Initial coi: {p2.valid, p2.AD}
+Variable  p2.REG
+  Initial coi: {p2.valid, p2.REG}
+Variable  p2.DT
+  Initial coi: {c2.REG}
+Variable  p2.valid
+  Initial coi: {p2.valid, c2.is_our_response, c2.is_load_in_cache}
+Variable  c1.TAG
+  Initial coi: {c1.is_load_response, bus.AD, c1.TAG}
+Variable  c1.REG
+  Initial coi: {c1.is_load_response, bus.DT, bus.CTRL, bus.AD, c1.TAG, bus.is_valid_mem, c1.REG}
+Variable  c1.AD
+  Initial coi: {p1.AD}
+Variable  c1.DT
+  Initial coi: {c1.is_load_response, bus.DT, p1.req, p1.REG, c1.DT}
+Variable  c1.CTRL
+  Initial coi: {p1.req, c1.CTRL}
+Variable  c1.valid
+  Initial coi: {bus.arb_gnt, c1.req}
+Variable  c1.req
+  Initial coi: {c1.is_our_response, p1.req, p1.valid, c1.is_load_in_cache, c1.req}
+Variable  c1.is_our_request
+  Initial coi: {bus.AD, c1.AD, bus.CTRL, c1.CTRL}
+Variable  c1.is_our_response
+  Initial coi: {c1.req, bus.is_valid_mem, c1.is_our_request}
+Variable  c1.is_load_response
+  Initial coi: {p1.req, c1.is_our_response}
+Variable  c1.is_load_in_cache
+  Initial coi: {p1.req, p1.AD, c1.TAG}
+Variable  c2.TAG
+  Initial coi: {c2.is_load_response, bus.AD, c2.TAG}
+Variable  c2.REG
+  Initial coi: {c2.is_load_response, bus.DT, bus.CTRL, bus.AD, c2.TAG, bus.is_valid_mem, c2.REG}
+Variable  c2.AD
+  Initial coi: {p2.AD}
+Variable  c2.DT
+  Initial coi: {c2.is_load_response, bus.DT, p2.req, p2.REG, c2.DT}
+Variable  c2.CTRL
+  Initial coi: {p2.req, c2.CTRL}
+Variable  c2.valid
+  Initial coi: {bus.arb_gnt, c2.req}
+Variable  c2.req
+  Initial coi: {c2.is_our_response, p2.req, p2.valid, c2.is_load_in_cache, c2.req}
+Variable  c2.is_our_request
+  Initial coi: {bus.AD, c2.AD, bus.CTRL, c2.CTRL}
+Variable  c2.is_our_response
+  Initial coi: {c2.req, bus.is_valid_mem, c2.is_our_request}
+Variable  c2.is_load_response
+  Initial coi: {p2.req, c2.is_our_response}
+Variable  c2.is_load_in_cache
+  Initial coi: {p2.req, p2.AD, c2.TAG}
+Variable  memory.data[0]
+  Initial coi: {bus.is_valid_cache, bus.CTRL, bus.AD, bus.DT, memory.data[0]}
+Variable  memory.data[1]
+  Initial coi: {bus.is_valid_cache, bus.CTRL, bus.AD, bus.DT, memory.data[1]}
+Variable  memory.AD
+  Initial coi: {bus.valid, bus.AD, memory.AD}
+Variable  memory.DT
+  Initial coi: {bus.valid, bus.CTRL, bus.AD, memory.data[0], memory.data[1], bus.DT, memory.DT}
+Variable  memory.CTRL
+  Initial coi: {bus.valid, bus.CTRL, memory.CTRL}
+Variable  memory.valid
+  Initial coi: {bus.arb_gnt, bus.DT, memory.DT}
+Variable  bus.AD.0
+  Initial coi: {}
+Variable  bus.CTRL.0
+  Initial coi: {}
+Variable  bus.arb_gnt.1
+  Initial coi: {}
+Variable  bus.arb_gnt.0
+  Initial coi: {}
+Variable  p1.req.1
+  Initial coi: {}
+Variable  p1.req.0
+  Initial coi: {}
+Variable  p1.AD.0
+  Initial coi: {}
+Variable  p2.req.1
+  Initial coi: {}
+Variable  p2.req.0
+  Initial coi: {}
+Variable  p2.AD.0
+  Initial coi: {}
+Variable  c1.TAG.1
+  Initial coi: {}
+Variable  c1.TAG.0
+  Initial coi: {}
+Variable  c1.AD.0
+  Initial coi: {}
+Variable  c1.CTRL.0
+  Initial coi: {}
+Variable  c2.TAG.1
+  Initial coi: {}
+Variable  c2.TAG.0
+  Initial coi: {}
+Variable  c2.AD.0
+  Initial coi: {}
+Variable  c2.CTRL.0
+  Initial coi: {}
+Variable  memory.AD.0
+  Initial coi: {}
+Variable  memory.CTRL.0
+  Initial coi: {}
+COI initialized.
+Properties ordering done
+evaluating specification AG (bus.arb_gnt = l1_1 -> (((bus.AD = c1.AD & bus.DT = c1.DT) & bus.CTRL = c1.CTRL) & bus.valid = c1.valid))  
+
+computing reachable state space
+  iteration 1: BDD size = 64, frontier size = 64, states = 64
+  forward step done, size = 297
+  new frontier computed, size = 296
+  iteration 2: BDD size = 297, frontier size = 296, states = 196
+  forward step done, size = 682
+  new frontier computed, size = 454
+  iteration 3: BDD size = 682, frontier size = 454, states = 364
+  forward step done, size = 941
+  new frontier computed, size = 385
+  iteration 4: BDD size = 941, frontier size = 385, states = 512
+  forward step done, size = 1312
+  new frontier computed, size = 408
+  iteration 5: BDD size = 1312, frontier size = 408, states = 660
+  forward step done, size = 1801
+  new frontier computed, size = 557
+  iteration 6: BDD size = 1801, frontier size = 557, states = 864
+  forward step done, size = 2470
+  new frontier computed, size = 930
+  iteration 7: BDD size = 2470, frontier size = 930, states = 4896
+  forward step done, size = 4148
+  new frontier computed, size = 2894
+  iteration 8: BDD size = 4148, frontier size = 2894, states = 11448
+  forward step done, size = 5858
+  new frontier computed, size = 3110
+  iteration 9: BDD size = 5858, frontier size = 3110, states = 17504
+  forward step done, size = 9466
+  new frontier computed, size = 4822
+  iteration 10: BDD size = 9466, frontier size = 4822, states = 28236
+  forward step done, size = 13583
+  new frontier computed, size = 6453
+  iteration 11: BDD size = 13583, frontier size = 6453, states = 40584
+  forward step done, size = 18409
+  new frontier computed, size = 7921
+  iteration 12: BDD size = 18409, frontier size = 7921, states = 61684
+  forward step done, size = 28238
+  new frontier computed, size = 14817
+  iteration 13: BDD size = 28238, frontier size = 14817, states = 134320
+  forward step done, size = 42857
+  new frontier computed, size = 24735
+  iteration 14: BDD size = 42857, frontier size = 24735, states = 221008
+  forward step done, size = 55294
+  new frontier computed, size = 26116
+  iteration 15: BDD size = 55294, frontier size = 26116, states = 370860
+  forward step done, size = 67315
+  new frontier computed, size = 29421
+  iteration 16: BDD size = 67315, frontier size = 29421, states = 525492
+  forward step done, size = 81347
+  new frontier computed, size = 38448
+  iteration 17: BDD size = 81347, frontier size = 38448, states = 701552
+  forward step done, size = 93741
+  new frontier computed, size = 34758
+  iteration 18: BDD size = 93741, frontier size = 34758, states = 936624
+  forward step done, size = 109472
+  new frontier computed, size = 44604
+  iteration 19: BDD size = 109472, frontier size = 44604, states = 1.14043e+06
+  forward step done, size = 114035
+  new frontier computed, size = 45349
+  iteration 20: BDD size = 114035, frontier size = 45349, states = 1.35803e+06
+  forward step done, size = 118667
+  new frontier computed, size = 35394
+  iteration 21: BDD size = 118667, frontier size = 35394, states = 1.55718e+06
+  forward step done, size = 122222
+  new frontier computed, size = 36479
+  iteration 22: BDD size = 122222, frontier size = 36479, states = 1.71145e+06
+  forward step done, size = 116773
+  new frontier computed, size = 31020
+  iteration 23: BDD size = 116773, frontier size = 31020, states = 1.86066e+06
+  forward step done, size = 112970
+  new frontier computed, size = 14172
+  iteration 24: BDD size = 112970, frontier size = 14172, states = 1.91114e+06
+  forward step done, size = 112374
+  new frontier computed, size = 6139
+  iteration 25: BDD size = 112374, frontier size = 6139, states = 1.93228e+06
+  forward step done, size = 111570
+  new frontier computed, size = 3854
+  iteration 26: BDD size = 111570, frontier size = 3854, states = 1.94347e+06
+  forward step done, size = 111123
+  new frontier computed, size = 2397
+  iteration 27: BDD size = 111123, frontier size = 2397, states = 1.94886e+06
+  forward step done, size = 110612
+  new frontier computed, size = 1020
+  iteration 28: BDD size = 110612, frontier size = 1020, states = 1.95081e+06
+  forward step done, size = 110515
+  new frontier computed, size = 276
+  iteration 29: BDD size = 110515, frontier size = 276, states = 1.95097e+06
+  forward step done, size = 110515
+  new frontier computed, size = 1
+done
+Computing the set of fair <state>x<input> pairs
+done
+eu: computing fixed point approximations for AG (bus.arb_gnt = l1_1 -> (((bus.AD = c1.AD & bus.DT = c1.DT) & bus.CTRL = c1.CTRL) & bus.valid = c1.valid)) ...
+-- specification AG (bus.arb_gnt = l1_1 -> (((bus.AD = c1.AD & bus.DT = c1.DT) & bus.CTRL = c1.CTRL) & bus.valid = c1.valid))  is true
+evaluating specification AG (bus.arb_gnt = mem -> ((bus.AD = memory.AD & bus.DT = memory.DT) & bus.valid = memory.valid))  
+eu: computing fixed point approximations for AG (bus.arb_gnt = mem -> ((bus.AD = memory.AD & bus.DT = memory.DT) & bus.valid = memory.valid)) ...
+-- specification AG (bus.arb_gnt = mem -> ((bus.AD = memory.AD & bus.DT = memory.DT) & bus.valid = memory.valid))  is true
+evaluating specification AG (((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = read) -> AX (AX (bus.DT = memory.data[c1.AD] & memory.valid)))  
+eu: computing fixed point approximations for AG (((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = read) -> AX (AX (bus.DT = memory.data[c1.AD] & memory.valid))) ...
+-- specification AG (((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = read) -> AX (AX (bus.DT = memory.data[c1.AD] & memory.valid)))  is true
+evaluating specification EG (EF ((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = read))  
+eu: computing fixed point approximations for EF ((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = read) ...
+size of Y1 = 161400 states, 11040 BDD nodes
+size of Y2 = 327760 states, 18898 BDD nodes
+size of Y3 = 535552 states, 29334 BDD nodes
+size of Y4 = 751912 states, 51696 BDD nodes
+size of Y5 = 976776 states, 67770 BDD nodes
+size of Y6 = 1.26723e+06 states, 77888 BDD nodes
+size of Y7 = 1.42512e+06 states, 90489 BDD nodes
+size of Y8 = 1.57048e+06 states, 101768 BDD nodes
+size of Y9 = 1.72831e+06 states, 107044 BDD nodes
+size of Y10 = 1.84009e+06 states, 112950 BDD nodes
+size of Y11 = 1.9248e+06 states, 110717 BDD nodes
+size of Y12 = 1.93536e+06 states, 111517 BDD nodes
+size of Y13 = 1.95097e+06 states, 110515 BDD nodes
+  size of res0 = 1.1259e+15 <states>x<input>, 1 BDD nodes
+  size of res1 = 1.95097e+06 <states>x<input>, 110515 BDD nodes
+-- specification EG (EF ((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = read))  is true
+evaluating specification AG (((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = write) -> AX (AX (memory.data[c1.AD] = c1.DT & memory.valid)))  
+eu: computing fixed point approximations for AG (((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = write) -> AX (AX (memory.data[c1.AD] = c1.DT & memory.valid))) ...
+-- specification AG (((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = write) -> AX (AX (memory.data[c1.AD] = c1.DT & memory.valid)))  is true
+evaluating specification EG (EF ((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = write))  
+eu: computing fixed point approximations for EF ((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = write) ...
+size of Y1 = 81580 states, 12074 BDD nodes
+size of Y2 = 166880 states, 27681 BDD nodes
+size of Y3 = 334328 states, 40052 BDD nodes
+size of Y4 = 594332 states, 62016 BDD nodes
+size of Y5 = 859264 states, 78251 BDD nodes
+size of Y6 = 1.1259e+06 states, 87348 BDD nodes
+size of Y7 = 1.31728e+06 states, 98788 BDD nodes
+size of Y8 = 1.4913e+06 states, 102205 BDD nodes
+size of Y9 = 1.70435e+06 states, 107193 BDD nodes
+size of Y10 = 1.853e+06 states, 110806 BDD nodes
+size of Y11 = 1.95097e+06 states, 110515 BDD nodes
+  size of res0 = 1.1259e+15 <states>x<input>, 1 BDD nodes
+  size of res1 = 1.95097e+06 <states>x<input>, 110515 BDD nodes
+-- specification EG (EF ((bus.valid & bus.arb_gnt = l1_1) & bus.CTRL = write))  is true
+evaluating specification EG (EF ((p1.req = load & p1.AD = c1.TAG) & !p1.valid))  
+eu: computing fixed point approximations for EF ((p1.req = load & p1.AD = c1.TAG) & !p1.valid) ...
+size of Y1 = 198080 states, 15456 BDD nodes
+size of Y2 = 431848 states, 33475 BDD nodes
+size of Y3 = 518172 states, 41501 BDD nodes
+size of Y4 = 614416 states, 47787 BDD nodes
+size of Y5 = 878624 states, 64744 BDD nodes
+size of Y6 = 1.13638e+06 states, 81805 BDD nodes
+size of Y7 = 1.49007e+06 states, 94835 BDD nodes
+size of Y8 = 1.69774e+06 states, 103819 BDD nodes
+size of Y9 = 1.79165e+06 states, 106697 BDD nodes
+size of Y10 = 1.84097e+06 states, 106355 BDD nodes
+size of Y11 = 1.87021e+06 states, 110479 BDD nodes
+size of Y12 = 1.9107e+06 states, 113129 BDD nodes
+size of Y13 = 1.93544e+06 states, 111446 BDD nodes
+size of Y14 = 1.94715e+06 states, 112455 BDD nodes
+size of Y15 = 1.95097e+06 states, 110515 BDD nodes
+  size of res0 = 1.1259e+15 <states>x<input>, 1 BDD nodes
+  size of res1 = 1.95097e+06 <states>x<input>, 110515 BDD nodes
+-- specification EG (EF ((p1.req = load & p1.AD = c1.TAG) & !p1.valid))  is true
+evaluating specification AG ((p1.valid & p1.req = store) -> p1.REG = memory.data[p1.AD])  
+eu: computing fixed point approximations for AG ((p1.valid & p1.req = store) -> p1.REG = memory.data[p1.AD]) ...
+size of Y1 = 200 states, 1081 BDD nodes
+size of Y2 = 500 states, 1699 BDD nodes
+size of Y3 = 1820 states, 2921 BDD nodes
+size of Y4 = 15836 states, 7951 BDD nodes
+size of Y5 = 39276 states, 14347 BDD nodes
+size of Y6 = 101092 states, 29265 BDD nodes
+size of Y7 = 249956 states, 40719 BDD nodes
+size of Y8 = 416580 states, 50705 BDD nodes
+size of Y9 = 628884 states, 67296 BDD nodes
+size of Y10 = 937204 states, 87582 BDD nodes
+size of Y11 = 1.33945e+06 states, 103359 BDD nodes
+size of Y12 = 1.64882e+06 states, 106540 BDD nodes
+size of Y13 = 1.74836e+06 states, 106983 BDD nodes
+size of Y14 = 1.76997e+06 states, 107799 BDD nodes
+size of Y15 = 1.82893e+06 states, 109366 BDD nodes
+size of Y16 = 1.88789e+06 states, 112352 BDD nodes
+size of Y17 = 1.95097e+06 states, 110515 BDD nodes
+-- specification AG ((p1.valid & p1.req = store) -> p1.REG = memory.data[p1.AD])  is false
+searching (counter)example for E [ TRUE U !((p1.valid & p1.req = store) -> p1.REG = memory.data[p1.AD]) ] 
+eu_explain: iteration 0: states = 1, BDD nodes = 51
+eu_explain: iteration 1: states = 16, BDD nodes = 47
+eu_explain: iteration 2: states = 49, BDD nodes = 168
+eu_explain: iteration 3: states = 91, BDD nodes = 377
+eu_explain: iteration 4: states = 128, BDD nodes = 511
+eu_explain: iteration 5: states = 165, BDD nodes = 715
+eu_explain: iteration 6: states = 258, BDD nodes = 1040
+eu_explain: iteration 7: states = 2274, BDD nodes = 1621
+eu_explain: iteration 8: states = 5860, BDD nodes = 2956
+eu_explain: iteration 9: states = 9074, BDD nodes = 4565
+eu_explain: iteration 10: states = 14651, BDD nodes = 7571
+Warning: Witness generation terminated at branch point.
+Warning: Branch due to a conjunction.
+Warning: (p1.valid & p1.req = store)
+(Considering only extension of the right conjunct)
+-- as demonstrated by the following execution sequence
+Trace Description: CTL Counterexample 
+Trace Type: Counterexample 
+  -> State: 1.1 <-
+    bus.AD = 0
+    bus.DT = FALSE
+    bus.CTRL = read
+    bus.valid = FALSE
+    bus.arb_gnt = none
+    bus.is_valid_mem = FALSE
+    bus.is_valid_cache = FALSE
+    p1.req = idle
+    p1.AD = 0
+    p1.REG = FALSE
+    p1.DT = TRUE
+    p1.valid = FALSE
+    p2.req = idle
+    p2.AD = 0
+    p2.REG = FALSE
+    p2.DT = TRUE
+    p2.valid = FALSE
+    c1.TAG = NULL
+    c1.REG = TRUE
+    c1.AD = 0
+    c1.DT = FALSE
+    c1.CTRL = read
+    c1.valid = FALSE
+    c1.req = FALSE
+    c1.is_our_request = TRUE
+    c1.is_our_response = FALSE
+    c1.is_load_response = FALSE
+    c1.is_load_in_cache = FALSE
+    c2.TAG = NULL
+    c2.REG = TRUE
+    c2.AD = 0
+    c2.DT = FALSE
+    c2.CTRL = read
+    c2.valid = FALSE
+    c2.req = FALSE
+    c2.is_our_request = TRUE
+    c2.is_our_response = FALSE
+    c2.is_load_response = FALSE
+    c2.is_load_in_cache = FALSE
+    memory.data[0] = FALSE
+    memory.data[1] = TRUE
+    memory.AD = 0
+    memory.DT = FALSE
+    memory.CTRL = read
+    memory.valid = FALSE
+  -> State: 1.2 <-
+    p1.req = load
+    p2.req = store
+  -> State: 1.3 <-
+    c1.req = TRUE
+    c2.CTRL = write
+    c2.req = TRUE
+    c2.is_our_request = FALSE
+  -> State: 1.4 <-
+    bus.valid = TRUE
+    bus.arb_gnt = l1_1
+    bus.is_valid_cache = TRUE
+    c1.valid = TRUE
+  -> State: 1.5 <-
+    bus.valid = FALSE
+    bus.arb_gnt = mem
+    bus.is_valid_cache = FALSE
+    c1.valid = FALSE
+  -> State: 1.6 <-
+    bus.valid = TRUE
+    bus.is_valid_mem = TRUE
+    c1.is_our_response = TRUE
+    c1.is_load_response = TRUE
+    memory.valid = TRUE
+  -> State: 1.7 <-
+    bus.valid = FALSE
+    bus.arb_gnt = l1_1
+    bus.is_valid_mem = FALSE
+    p1.DT = FALSE
+    p1.valid = TRUE
+    c1.TAG = 0
+    c1.REG = FALSE
+    c1.req = FALSE
+    c1.is_our_response = FALSE
+    c1.is_load_response = FALSE
+    c1.is_load_in_cache = TRUE
+  -> State: 1.8 <-
+    bus.arb_gnt = none
+    p1.req = store
+    p1.REG = TRUE
+    p1.valid = FALSE
+    c1.is_load_in_cache = FALSE
+    memory.valid = FALSE
+  -> State: 1.9 <-
+    bus.CTRL = write
+    bus.valid = TRUE
+    bus.arb_gnt = l1_2
+    bus.is_valid_cache = TRUE
+    c1.DT = TRUE
+    c1.CTRL = write
+    c1.req = TRUE
+    c2.valid = TRUE
+    c2.is_our_request = TRUE
+  -> State: 1.10 <-
+    bus.valid = FALSE
+    bus.arb_gnt = mem
+    bus.is_valid_cache = FALSE
+    c2.valid = FALSE
+    memory.CTRL = write
+  -> State: 1.11 <-
+    bus.valid = TRUE
+    bus.is_valid_mem = TRUE
+    c1.is_our_response = TRUE
+    c2.is_our_response = TRUE
+    memory.valid = TRUE
+  -> State: 1.12 <-
+    bus.DT = TRUE
+    bus.valid = FALSE
+    bus.arb_gnt = l1_1
+    bus.is_valid_mem = FALSE
+    p1.valid = TRUE
+    p2.valid = TRUE
+    c1.req = FALSE
+    c1.is_our_response = FALSE
+    c2.req = FALSE
+    c2.is_our_response = FALSE
+evaluating specification AG (p1.req = idle -> EF p1.req != idle)  
+eu: computing fixed point approximations for EF p1.req != idle ...
+size of Y1 = 1.68764e+06 states, 110957 BDD nodes
+size of Y2 = 1.95097e+06 states, 110515 BDD nodes
+eu: computing fixed point approximations for AG (p1.req = idle -> EF p1.req != idle) ...
+-- specification AG (p1.req = idle -> EF p1.req != idle)  is true
+evaluating specification AG (p1.req = load -> EF p1.req != load)  
+eu: computing fixed point approximations for EF p1.req != load ...
+size of Y1 = 777828 states, 71710 BDD nodes
+size of Y2 = 903460 states, 82778 BDD nodes
+size of Y3 = 1.17322e+06 states, 89783 BDD nodes
+size of Y4 = 1.25325e+06 states, 92498 BDD nodes
+size of Y5 = 1.44419e+06 states, 99850 BDD nodes
+size of Y6 = 1.62797e+06 states, 104773 BDD nodes
+size of Y7 = 1.83576e+06 states, 109084 BDD nodes
+size of Y8 = 1.91608e+06 states, 111227 BDD nodes
+size of Y9 = 1.95097e+06 states, 110515 BDD nodes
+eu: computing fixed point approximations for AG (p1.req = load -> EF p1.req != load) ...
+-- specification AG (p1.req = load -> EF p1.req != load)  is true
+evaluating specification AG (p1.req = store -> EF p1.req != store)  
+eu: computing fixed point approximations for EF p1.req != store ...
+size of Y1 = 1.43648e+06 states, 71866 BDD nodes
+size of Y2 = 1.45164e+06 states, 76591 BDD nodes
+size of Y3 = 1.47423e+06 states, 80745 BDD nodes
+size of Y4 = 1.49886e+06 states, 83716 BDD nodes
+size of Y5 = 1.59003e+06 states, 93396 BDD nodes
+size of Y6 = 1.68252e+06 states, 105116 BDD nodes
+size of Y7 = 1.84996e+06 states, 109439 BDD nodes
+size of Y8 = 1.91629e+06 states, 111709 BDD nodes
+size of Y9 = 1.95097e+06 states, 110515 BDD nodes
+eu: computing fixed point approximations for AG (p1.req = store -> EF p1.req != store) ...
+-- specification AG (p1.req = store -> EF p1.req != store)  is true
+evaluating specification AG (((p1.req = load & p1.AD = c1.TAG) & !p1.valid) -> AX (p1.DT = c1.REG & p1.valid))  
+eu: computing fixed point approximations for AG (((p1.req = load & p1.AD = c1.TAG) & !p1.valid) -> AX (p1.DT = c1.REG & p1.valid)) ...
+-- specification AG (((p1.req = load & p1.AD = c1.TAG) & !p1.valid) -> AX (p1.DT = c1.REG & p1.valid))  is true
+evaluating specification AG ((p1.valid & p1.req = load) -> p1.DT = memory.data[p1.AD])  
+eu: computing fixed point approximations for AG ((p1.valid & p1.req = load) -> p1.DT = memory.data[p1.AD]) ...
+size of Y1 = 960 states, 787 BDD nodes
+size of Y2 = 4576 states, 2194 BDD nodes
+size of Y3 = 10048 states, 4914 BDD nodes
+size of Y4 = 26688 states, 9833 BDD nodes
+size of Y5 = 85996 states, 18802 BDD nodes
+size of Y6 = 194484 states, 26613 BDD nodes
+size of Y7 = 346472 states, 40961 BDD nodes
+size of Y8 = 582232 states, 59898 BDD nodes
+size of Y9 = 892536 states, 79628 BDD nodes
+size of Y10 = 1.27752e+06 states, 94954 BDD nodes
+size of Y11 = 1.44262e+06 states, 101117 BDD nodes
+size of Y12 = 1.51758e+06 states, 104160 BDD nodes
+size of Y13 = 1.64416e+06 states, 108071 BDD nodes
+size of Y14 = 1.76648e+06 states, 116680 BDD nodes
+size of Y15 = 1.91766e+06 states, 111650 BDD nodes
+size of Y16 = 1.93858e+06 states, 112584 BDD nodes
+size of Y17 = 1.95097e+06 states, 110515 BDD nodes
+-- specification AG ((p1.valid & p1.req = load) -> p1.DT = memory.data[p1.AD])  is false
+searching (counter)example for E [ TRUE U !((p1.valid & p1.req = load) -> p1.DT = memory.data[p1.AD]) ] 
+eu_explain: iteration 0: states = 1, BDD nodes = 51
+eu_explain: iteration 1: states = 16, BDD nodes = 47
+eu_explain: iteration 2: states = 49, BDD nodes = 168
+eu_explain: iteration 3: states = 91, BDD nodes = 377
+eu_explain: iteration 4: states = 128, BDD nodes = 511
+eu_explain: iteration 5: states = 165, BDD nodes = 715
+eu_explain: iteration 6: states = 258, BDD nodes = 1040
+eu_explain: iteration 7: states = 2274, BDD nodes = 1621
+eu_explain: iteration 8: states = 5860, BDD nodes = 2956
+eu_explain: iteration 9: states = 9074, BDD nodes = 4565
+Warning: Witness generation terminated at branch point.
+Warning: Branch due to a conjunction.
+Warning: (p1.valid & p1.req = load)
+(Considering only extension of the right conjunct)
+-- as demonstrated by the following execution sequence
+Trace Description: CTL Counterexample 
+Trace Type: Counterexample 
+  -> State: 2.1 <-
+    bus.AD = 0
+    bus.DT = FALSE
+    bus.CTRL = read
+    bus.valid = FALSE
+    bus.arb_gnt = none
+    bus.is_valid_mem = FALSE
+    bus.is_valid_cache = FALSE
+    p1.req = idle
+    p1.AD = 0
+    p1.REG = FALSE
+    p1.DT = TRUE
+    p1.valid = FALSE
+    p2.req = idle
+    p2.AD = 0
+    p2.REG = FALSE
+    p2.DT = TRUE
+    p2.valid = FALSE
+    c1.TAG = NULL
+    c1.REG = TRUE
+    c1.AD = 0
+    c1.DT = FALSE
+    c1.CTRL = read
+    c1.valid = FALSE
+    c1.req = FALSE
+    c1.is_our_request = TRUE
+    c1.is_our_response = FALSE
+    c1.is_load_response = FALSE
+    c1.is_load_in_cache = FALSE
+    c2.TAG = NULL
+    c2.REG = TRUE
+    c2.AD = 0
+    c2.DT = FALSE
+    c2.CTRL = read
+    c2.valid = FALSE
+    c2.req = FALSE
+    c2.is_our_request = TRUE
+    c2.is_our_response = FALSE
+    c2.is_load_response = FALSE
+    c2.is_load_in_cache = FALSE
+    memory.data[0] = FALSE
+    memory.data[1] = TRUE
+    memory.AD = 0
+    memory.DT = FALSE
+    memory.CTRL = read
+    memory.valid = FALSE
+  -> State: 2.2 <-
+    p1.req = load
+  -> State: 2.3 <-
+    c1.req = TRUE
+  -> State: 2.4 <-
+    bus.valid = TRUE
+    bus.arb_gnt = l1_1
+    bus.is_valid_cache = TRUE
+    c1.valid = TRUE
+  -> State: 2.5 <-
+    bus.valid = FALSE
+    bus.arb_gnt = mem
+    bus.is_valid_cache = FALSE
+    p2.req = load
+    c1.valid = FALSE
+  -> State: 2.6 <-
+    bus.valid = TRUE
+    bus.is_valid_mem = TRUE
+    c1.is_our_response = TRUE
+    c1.is_load_response = TRUE
+    c2.req = TRUE
+    c2.is_our_response = TRUE
+    c2.is_load_response = TRUE
+    memory.valid = TRUE
+  -> State: 2.7 <-
+    bus.valid = FALSE
+    bus.arb_gnt = l1_1
+    bus.is_valid_mem = FALSE
+    p1.DT = FALSE
+    p1.valid = TRUE
+    p2.DT = FALSE
+    p2.valid = TRUE
+    c1.TAG = 0
+    c1.REG = FALSE
+    c1.req = FALSE
+    c1.is_our_response = FALSE
+    c1.is_load_response = FALSE
+    c1.is_load_in_cache = TRUE
+    c2.TAG = 0
+    c2.REG = FALSE
+    c2.req = FALSE
+    c2.is_our_response = FALSE
+    c2.is_load_response = FALSE
+    c2.is_load_in_cache = TRUE
+  -> State: 2.8 <-
+    bus.arb_gnt = none
+    p1.valid = FALSE
+    p2.req = store
+    p2.REG = TRUE
+    p2.valid = FALSE
+    c2.is_load_in_cache = FALSE
+    memory.valid = FALSE
+  -> State: 2.9 <-
+    p1.valid = TRUE
+    c2.DT = TRUE
+    c2.CTRL = write
+    c2.req = TRUE
+    c2.is_our_request = FALSE
+  -> State: 2.10 <-
+    bus.DT = TRUE
+    bus.CTRL = write
+    bus.valid = TRUE
+    bus.arb_gnt = l1_2
+    bus.is_valid_cache = TRUE
+    p1.valid = FALSE
+    c1.is_our_request = FALSE
+    c2.valid = TRUE
+    c2.is_our_request = TRUE
+  -> State: 2.11 <-
+    bus.valid = FALSE
+    bus.arb_gnt = mem
+    bus.is_valid_cache = FALSE
+    p1.valid = TRUE
+    c2.valid = FALSE
+    memory.data[0] = TRUE
+    memory.DT = TRUE
+    memory.CTRL = write
+Ordering properties by COI size
+Properties ordering done
+Ordering properties by COI size
+Properties ordering done
+Ordering properties by COI size
+Properties ordering done
+Ordering properties by COI size
+Properties ordering done
+######################################################################
+Runtime Statistics
+------------------
+Machine name: X260-NICOLAS
+User time   346.966 seconds
+System time  0.196 seconds
+
+Average resident text size       =     0K
+Average resident data+stack size =     0K
+Maximum resident size            = 68552K
+
+Virtual text size                =  7729K
+Virtual data size                = 127699K
+    data size initialized        =  3306K
+    data size uninitialized      =   164K
+    data size sbrk               = 124229K
+Virtual memory limit             = -2147483648K (-2147483648K)
+
+Major page faults = 0
+Minor page faults = 50380
+Swaps = 0
+Input blocks = 0
+Output blocks = 0
+Context switch (voluntary) = 0
+Context switch (involuntary) = 1023
+######################################################################
+BDD statistics
+--------------------
+BDD nodes allocated: 877877
+--------------------
+Statistics on BDD FSM machine.
+BDD nodes representing init set of states: 25
+BDD nodes representing state constraints: 4010
+BDD nodes representing input constraints: 1
+Forward Partitioning Schedule BDD cluster size (#nodes):
+cluster 1       :       size 9720
+cluster 2       :       size 2992
+Backward Partitioning Schedule BDD cluster size (#nodes):
+cluster 1       :       size 9720
+cluster 2       :       size 2992
+Quitting core addons...
+Quitting the Compass package... 
+Quitting the BMC package... 
+Resetting the SBMC module...
+Done 
+Done 
+Shutting down the compiler...
+Forcing destruction of previoulsy created BDD FSM...
+Forcing destruction of previoulsy created SEXP FSM...
+
+Successful termination
+<<< 17:48:38.110

@@ -8,8 +8,7 @@ VAR
   CTRL:    {read, write};
   valid:   boolean; -- data on the bus is valid
   -------------- arbitre data --------------
-  arb_gnt: {none, l1_1, l1_2, l1_3, mem}; -- arbitre decision
-  arb_last: {l1_1, l1_2, l1_3};
+  arb_gnt: {none, l1_1, l1_2, mem}; -- arbitre decision
 
   ------------- computed state -------------
   is_valid_mem:  boolean;
@@ -17,7 +16,7 @@ VAR
 
 ASSIGN
   is_valid_mem := arb_gnt = mem & valid;
-  is_valid_cache := valid & (arb_gnt = l1_1 | arb_gnt = l1_2 | arb_gnt = l1_3);
+  is_valid_cache := valid & (arb_gnt = l1_1 | arb_gnt = l1_2);
 
 ----------------------------------- Memory -----------------------------------
 MODULE Memory(bus)
@@ -189,10 +188,8 @@ VAR
   bus: Bus;
   p1: Processor;
   p2: Processor;
-  p3: Processor;
   c1: Cache(bus, p1, l1_1);
   c2: Cache(bus, p2, l1_2);
-  c3: Cache(bus, p3, l1_3);
   memory: Memory(bus);
 
 ASSIGN
@@ -202,18 +199,10 @@ ASSIGN
   -------------- bus arbitre ---------------
   next(bus.arb_gnt) :=
     case
-      (bus.arb_last = l1_3 | !c2.req) & c1.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
-      (bus.arb_last = l1_1 | !c3.req) & c2.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_2; -- if mem data is valid on the bus, then next master is l1_2
-      (bus.arb_last = l1_2 | !c1.req) & c3.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_3; -- if mem data is valid on the bus, then next master is l1_3
+      c1.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
+      c2.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_2; -- if mem data is valid on the bus, then next master is l1_2
       bus.is_valid_cache | bus.arb_gnt = mem:            mem; -- if cache made a request, then next master is mem
       TRUE:                                              none; -- default bus master is none
-    esac;
-  next(bus.arb_last) :=
-    case
-      bus.arb_gnt = l1_1: l1_1;
-      bus.arb_gnt = l1_2: l1_2;
-      bus.arb_gnt = l1_3: l1_3;
-      TRUE: bus.arb_last;
     esac;
 
   ------------- bus out values -------------
@@ -221,28 +210,24 @@ ASSIGN
     case
       bus.arb_gnt = l1_1: c1.AD;
       bus.arb_gnt = l1_2: c2.AD;
-      bus.arb_gnt = l1_3: c3.AD;
       TRUE: memory.AD;
     esac;
   bus.DT :=
     case
       bus.arb_gnt = l1_1: c1.DT;
       bus.arb_gnt = l1_2: c2.DT;
-      bus.arb_gnt = l1_3: c3.DT;
       TRUE: memory.DT;
     esac;
   bus.CTRL :=
     case
       bus.arb_gnt = l1_1: c1.CTRL;
       bus.arb_gnt = l1_2: c2.CTRL;
-      bus.arb_gnt = l1_3: c3.CTRL;
       TRUE: memory.CTRL;
     esac;
   bus.valid :=
     case
       bus.arb_gnt = l1_1: c1.valid;
       bus.arb_gnt = l1_2: c2.valid;
-      bus.arb_gnt = l1_3: c3.valid;
       TRUE: memory.valid;
     esac;
 
