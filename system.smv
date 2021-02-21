@@ -8,7 +8,8 @@ VAR
   CTRL:    {read, write};
   valid:   boolean; -- data on the bus is valid
   -------------- arbitre data --------------
-  arb_gnt: {none, l1_1, mem}; -- arbitre decision
+  arb_gnt: {none, l1_1, l1_2, l1_3, mem}; -- arbitre decision
+  arb_last: {l1_1, l1_2, l1_3};
 
   ------------- computed state -------------
   is_valid_mem:  boolean;
@@ -16,7 +17,7 @@ VAR
 
 ASSIGN
   is_valid_mem := arb_gnt = mem & valid;
-  is_valid_cache := arb_gnt = l1_1 & valid;
+  is_valid_cache := valid & (arb_gnt = l1_1 | arb_gnt = l1_2 | arb_gnt = l1_3);
 
 ----------------------------------- Memory -----------------------------------
 MODULE Memory(bus)
@@ -186,8 +187,12 @@ ASSIGN
 MODULE main
 VAR
   bus: Bus;
-  processor: Processor;
-  cache: Cache(bus, processor, l1_1);
+  p1: Processor;
+  p2: Processor;
+  p3: Processor;
+  c1: Cache(bus, p1, l1_1);
+  c2: Cache(bus, p2, l1_2);
+  c3: Cache(bus, p3, l1_3);
   memory: Memory(bus);
 
 ASSIGN
@@ -197,89 +202,106 @@ ASSIGN
   -------------- bus arbitre ---------------
   next(bus.arb_gnt) :=
     case
-      cache.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
-      bus.is_valid_cache | bus.arb_gnt = mem:               mem; -- if cache made a request, then next master is mem
-      TRUE:                                                 none; -- default bus master is none
+      (bus.arb_last = l1_3 | !c2.req) & c1.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_1; -- if mem data is valid on the bus, then next master is l1_1
+      (bus.arb_last = l1_1 | !c3.req) & c2.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_2; -- if mem data is valid on the bus, then next master is l1_2
+      (bus.arb_last = l1_2 | !c1.req) & c3.req & (bus.is_valid_mem | bus.arb_gnt = none) : l1_3; -- if mem data is valid on the bus, then next master is l1_3
+      bus.is_valid_cache | bus.arb_gnt = mem:            mem; -- if cache made a request, then next master is mem
+      TRUE:                                              none; -- default bus master is none
+    esac;
+  next(bus.arb_last) :=
+    case
+      bus.arb_gnt = l1_1: l1_1;
+      bus.arb_gnt = l1_2: l1_2;
+      bus.arb_gnt = l1_3: l1_3;
+      TRUE: bus.arb_last;
     esac;
 
   ------------- bus out values -------------
   bus.AD :=
     case
-      bus.arb_gnt = l1_1: cache.AD;
+      bus.arb_gnt = l1_1: c1.AD;
+      bus.arb_gnt = l1_2: c2.AD;
+      bus.arb_gnt = l1_3: c3.AD;
       TRUE: memory.AD;
     esac;
   bus.DT :=
     case
-      bus.arb_gnt = l1_1: cache.DT;
+      bus.arb_gnt = l1_1: c1.DT;
+      bus.arb_gnt = l1_2: c2.DT;
+      bus.arb_gnt = l1_3: c3.DT;
       TRUE: memory.DT;
     esac;
   bus.CTRL :=
     case
-      bus.arb_gnt = l1_1: cache.CTRL;
+      bus.arb_gnt = l1_1: c1.CTRL;
+      bus.arb_gnt = l1_2: c2.CTRL;
+      bus.arb_gnt = l1_3: c3.CTRL;
       TRUE: memory.CTRL;
     esac;
   bus.valid :=
     case
-      bus.arb_gnt = l1_1: cache.valid;
+      bus.arb_gnt = l1_1: c1.valid;
+      bus.arb_gnt = l1_2: c2.valid;
+      bus.arb_gnt = l1_3: c3.valid;
       TRUE: memory.valid;
     esac;
 
 --------------------------- Specifications ---------------------------
  -- there is a branch where mem is infinitely often the master
-SPEC EG EF(bus.arb_gnt = mem)
+-- SPEC EG EF(bus.arb_gnt = mem)
  -- there is a branch where l1_1 is infinitely often the master
-SPEC EG EF(bus.arb_gnt = l1_1)
+-- SPEC EG EF(bus.arb_gnt = l1_1)
 
 
 ----------------- bus --------------------
 -- if l1_1 is bus master, then bus out must be l1_in --
-SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD = cache.AD & bus.DT = cache.DT & bus.CTRL = cache.CTRL & bus.valid = cache.valid) )
+SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.AD = c1.AD & bus.DT = c1.DT & bus.CTRL = c1.CTRL & bus.valid = c1.valid) )
 -- if mem is bus master, then bus out must be mem_in --
 SPEC AG ( (bus.arb_gnt = mem) -> (bus.AD = memory.AD & bus.DT = memory.DT & bus.valid = memory.valid) )
 -- if bus is l1_1 then it should also be valid (not yes respected) --
 -- SPEC AG ( (bus.arb_gnt = l1_1) -> (bus.valid) )
 
----------------- cache -------------------
+---------------- c1 -------------------
 -- if l1_1 reads data, then next value in bus is the requested value and memory response takes 2 cycles --
-SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX AX (bus.DT = memory.data[cache.AD] & memory.valid) )
+SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read) -> AX AX (bus.DT = memory.data[c1.AD] & memory.valid) )
 SPEC EG EF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = read)
 -- if l1_1 writes data, then next value in memory is the written value and memory response takes 2 cycles --
-SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX AX (memory.data[cache.AD] = cache.DT & memory.valid) )
+SPEC AG ( (bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write) -> AX AX (memory.data[c1.AD] = c1.DT & memory.valid) )
 SPEC EG EF(bus.valid & bus.arb_gnt = l1_1 & bus.CTRL = write)
--- if proc reads data present in cache, then response should be the value of the cache register and should be next cycle --
-SPEC AG ( (processor.req = load & processor.AD = cache.TAG & !processor.valid) -> AX (processor.DT = cache.REG & processor.valid) )
-SPEC EG EF(processor.req = load & processor.AD = cache.TAG & !processor.valid)
+-- if proc reads data present in c1, then response should be the value of the c1 register and should be next cycle --
+SPEC AG ( (p1.req = load & p1.AD = c1.TAG & !p1.valid) -> AX (p1.DT = c1.REG & p1.valid) )
+SPEC EG EF(p1.req = load & p1.AD = c1.TAG & !p1.valid)
 
--------------- processor -----------------
-SPEC EG EF(processor.valid & processor.req != idle)
+-------------- p1 -----------------
+-- SPEC EG EF(p1.valid & p1.req != idle)
 -- if proc read a data, the the read value must be the same as the one in memory --
-SPEC AG ( (processor.valid & processor.req = load) -> (processor.DT = memory.data[processor.AD]) )
+SPEC AG ( (p1.valid & p1.req = load) -> (p1.DT = memory.data[p1.AD]) )
 -- if proc read a data, the the read value must be the same as the one in memory --
-SPEC AG ( (processor.valid & processor.req = store) -> (processor.REG = memory.data[processor.AD]) )
--- processor can quit idle req state --
-SPEC AG ( (processor.req = idle) -> EF (processor.req != idle) )
--- processor can quit load req state --
-SPEC AG ( (processor.req = load) -> EF (processor.req != load) )
--- processor can quit store req state --
-SPEC AG ( (processor.req = store) -> EF (processor.req != store) )
+SPEC AG ( (p1.valid & p1.req = store) -> (p1.REG = memory.data[p1.AD]) )
+-- p1 can quit idle req state --
+SPEC AG ( (p1.req = idle) -> EF (p1.req != idle) )
+-- p1 can quit load req state --
+SPEC AG ( (p1.req = load) -> EF (p1.req != load) )
+-- p1 can quit store req state --
+SPEC AG ( (p1.req = store) -> EF (p1.req != store) )
 
 ---------------- other -------------------
 -- verify that there are branches whith these cases --
-SPEC EG EF(memory.data[0] = TRUE)
-SPEC EG EF(memory.data[0] = FALSE)
-SPEC EG EF(memory.data[1] = TRUE)
-SPEC EG EF(memory.data[1] = FALSE)
-SPEC EG EF(cache.AD = 0 & cache.CTRL = read)
-SPEC EG EF(cache.AD = 1 & cache.CTRL = read)
-SPEC EG EF(cache.AD = 0 & cache.CTRL = write)
-SPEC EG EF(cache.AD = 1 & cache.CTRL = write)
-SPEC EG EF(cache.is_our_response)
-SPEC EG EF(processor.AD = 0 & processor.req = load & processor.REG = TRUE)
-SPEC EG EF(processor.AD = 1 & processor.req = load & processor.REG = TRUE)
-SPEC EG EF(processor.AD = 0 & processor.req = store & processor.REG = TRUE)
-SPEC EG EF(processor.AD = 1 & processor.req = store & processor.REG = TRUE)
-SPEC EG EF(processor.AD = 0 & processor.req = load & processor.REG = FALSE)
-SPEC EG EF(processor.AD = 1 & processor.req = load & processor.REG = FALSE)
-SPEC EG EF(processor.AD = 0 & processor.req = store & processor.REG = FALSE)
-SPEC EG EF(processor.AD = 1 & processor.req = store & processor.REG = FALSE)
+-- SPEC EG EF(memory.data[0] = TRUE)
+-- SPEC EG EF(memory.data[0] = FALSE)
+-- SPEC EG EF(memory.data[1] = TRUE)
+-- SPEC EG EF(memory.data[1] = FALSE)
+-- SPEC EG EF(c1.AD = 0 & c1.CTRL = read)
+-- SPEC EG EF(c1.AD = 1 & c1.CTRL = read)
+-- SPEC EG EF(c1.AD = 0 & c1.CTRL = write)
+-- SPEC EG EF(c1.AD = 1 & c1.CTRL = write)
+-- SPEC EG EF(c1.is_our_response)
+-- SPEC EG EF(p1.AD = 0 & p1.req = load & p1.REG = TRUE)
+-- SPEC EG EF(p1.AD = 1 & p1.req = load & p1.REG = TRUE)
+-- SPEC EG EF(p1.AD = 0 & p1.req = store & p1.REG = TRUE)
+-- SPEC EG EF(p1.AD = 1 & p1.req = store & p1.REG = TRUE)
+-- SPEC EG EF(p1.AD = 0 & p1.req = load & p1.REG = FALSE)
+-- SPEC EG EF(p1.AD = 1 & p1.req = load & p1.REG = FALSE)
+-- SPEC EG EF(p1.AD = 0 & p1.req = store & p1.REG = FALSE)
+-- SPEC EG EF(p1.AD = 1 & p1.req = store & p1.REG = FALSE)
 

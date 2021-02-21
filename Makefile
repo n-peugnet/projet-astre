@@ -11,7 +11,7 @@ SRC_FILE = $(addsuffix .smv,$(SRC))
 
 # Debug flags
 ifdef DEBUG
-NUSMV_FLAGS += -v 1
+NUSMV_FLAGS += -v 3
 endif
 
 ############## PHONY targets ##############
