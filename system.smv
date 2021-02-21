@@ -57,6 +57,7 @@ ASSIGN
   next(DT) :=
     case
       bus.valid & bus.CTRL = read: data[bus.AD];
+      bus.valid & bus.CTRL = write: bus.DT; -- keep write data from bus in bus out
       TRUE: DT;
     esac;
   next(CTRL) :=
@@ -105,12 +106,12 @@ ASSIGN
   next(TAG) :=
     case
       is_load_response: bus.AD; -- fill cache TAG if the requested data is on the bus
-      processor.req = store & processor.AD = TAG: NULL; -- evict cache if store is same adress
       TRUE: TAG; -- keep cache in any other configuration
     esac;
   next(REG) :=
     case
-      is_load_response: bus.DT;
+      is_load_response: bus.DT; -- fill cache REG if the requested data is on the bus
+      bus.CTRL = write & bus.AD = TAG & bus.is_valid_mem: bus.DT; -- SNOOP, fill data if it is the one written on the bus
       TRUE: REG;
     esac;
 
